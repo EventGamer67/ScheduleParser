@@ -28,25 +28,22 @@ if __name__ == '__main__':
 
 
     # #print(getMonthAvalibleDays(soup=soup, monthIndex=0))
-    #
     # downloadFile(link=link, filename=f"date.pdf")
 
+    #link = getLastZamenaLink(soup=soup)
+    # date = getLastZamenaDate(soup=soup)
+    # filename="zam-23"
+    # downloadFile(link=link, filename=filename+".pdf")
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert(f'{filename}.docx', start=0, end=None)
+    # cv.close()
+    # date = datetime.date(2024, 1, 23)
+    # parseZamenas(f'{filename}.docx',date=date,sup=initSupabase())
+    # addNewZamenaFileLink(link,date=date)
 
-
-
-
-    link = getLastZamenaLink(soup=soup)
-    date = getLastZamenaDate(soup=soup)
-    print(link)
-    print(date)
-    filename="zam-22"
-    downloadFile(link=link, filename=filename+".pdf")
-    cv = Converter(f'{filename}.pdf')
-    cv.convert(f'{filename}.docx', start=0, end=None)
-    cv.close()
-    date = datetime.date(2024, 1, 22)
-    parseZamenas(f'{filename}.docx',date=date,sup=initSupabase())
-    addNewZamenaFileLink(link,date=date)
+    sup = initSupabase()
+    date = datetime.date(2024,1,15)
+    parseParas(filename='schedule',date=date,sup=sup)
 
     pass
 

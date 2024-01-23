@@ -29,6 +29,7 @@ from docx import Document
 from docx.document import Document as DocumentType
 from docx.table import Table
 
+
 def parseParas(filename: str, date, sup):
     cv = Converter(f'{filename}.pdf')
     cv.convert('schedule' + '.docx', start=0, end=None)
@@ -73,7 +74,6 @@ def parseParas(filename: str, date, sup):
     courses = getCourses(sup=sup)
     teachers = getTeachers(sup=sup)
     cabinets = getCabinets(sup=sup)
-    date = date(2024, 1, 15)
 
     for gruppa in divided:
         paras = divided[gruppa]
@@ -152,6 +152,7 @@ def parseZamenas(filename: str, date,sup):
 
     for row in workRows:
         teacher = get_teacher_by_id(teachers,row[3],sup=sup)
+        print(teacher)
         if teacher is not None:
             row[3] = teacher.id
 
@@ -173,6 +174,8 @@ def removeDoubleRows(table):
         if(not row in alreadyExist):
             alreadyExist.append(row)
     return alreadyExist
+
+
 def removeDuplicates(table):
     index = 0
     cleared = []
@@ -261,12 +264,14 @@ def defineGroups(groups,table):
     divided.pop('x')
     return divided
 
+
 def clearSingleStrings(table):
     cleared = []
     for row in table:
         if (not isinstance(row, str)):
             cleared.append(row)
     return cleared
+
 
 def clearDiscipline(table):
     for row in table:
@@ -280,14 +285,27 @@ def clearDiscipline(table):
                 pass
     return table
 
+
 def get_cabinet_by_id(cabinets, target_name,sup) -> Cabinet:
     for cabinet in cabinets:
         if cabinet.name == target_name:
             return cabinet
     try:
         addCabinet(target_name,sup=sup)
+        new_cabinets = getCabinets(sup=sup)
+        get_cabinet_by_id(cabinets=new_cabinets,target_name=target_name,sup=sup)
     except:
         return None
+    return None
+
+
+def get_teacher_from_short_name(teachers : List[Teacher], shortName : str):
+    for i in teachers:
+        fio : List[str] = i.name.split(' ')
+        if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
+            compare_result = f"{fio[0]} {fio[1][0]}.{fio[2][0]}."
+            if compare_result.lower().strip() == shortName.lower().strip():
+                return i
     return None
 
 
@@ -295,11 +313,18 @@ def get_teacher_by_id(teachers, target_name,sup) -> Teacher:
     for teacher in teachers:
         if teacher.name == target_name:
             return teacher
+        else:
+            search = get_teacher_from_short_name(teachers=teachers,shortName=target_name)
+            if search is not None:
+                return search
     try:
         addTeacher(target_name,sup=sup)
+        new_teachers = getTeachers(sup=sup)
+        return get_teacher_by_id(teachers=new_teachers, target_name=target_name, sup=sup)
     except:
         return None
     return None
+
 
 def get_group_by_id(groups, target_name,sup) -> Group:
     for group in groups:
@@ -307,6 +332,8 @@ def get_group_by_id(groups, target_name,sup) -> Group:
             return group
     try:
         addGroup(target_name,sup=sup)
+        new_groups = getGroups(sup=sup)
+        return get_group_by_id(groups=new_groups,target_name=target_name,sup=sup)
     except:
         return None
     return None
@@ -317,6 +344,8 @@ def get_course_by_id(courses, target_name,sup) -> Course:
             return course
     try:
         addCourse(target_name,sup=sup)
+        new_course = getCourses(sup=sup)
+        return get_course_by_id(new_course, target_name=target_name,sup=sup)
     except:
         return None
     return None
@@ -327,10 +356,7 @@ def extract_all_tables_to_rows(tables: List[Table]) -> List[List[str]]:
         for row in table.rows:
             data = []
             for cell in row.cells:
-                # Извлекаем текст из каждой ячейки
                 cell_text = cell.text.strip()
-
-                # Если в ячейке есть таблица, рекурсивно извлекаем данные из неё
                 if cell.tables:
                     nested_table_rows = extract_all_tables_to_rows(cell.tables)
                     data.extend(nested_table_rows)
