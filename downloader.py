@@ -31,9 +31,9 @@ from docx.table import Table
 
 
 def parseParas(filename: str, date, sup,data):
-    cv = Converter(f'{filename}.pdf')
-    cv.convert('schedule' + '.docx', start=0, end=None)
-    cv.close()
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert('schedule' + '.docx', start=0, end=None)
+    # cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -176,7 +176,6 @@ def ParasGroupToSoup(group, paras, startday, sup,data:Data):
     date = startday
     for para in paras:
         number = para[0]
-        print(para)
         ParaMonday: str = para[1]
         paraTuesday: str = para[3]
         paraWednesday: str = para[5]
@@ -191,11 +190,9 @@ def ParasGroupToSoup(group, paras, startday, sup,data:Data):
             if aww is not None:
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup,data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup,data=data)
-                #fix here
-                cabinet = get_cabinet_by_id(target_name=para[2], cabinets=data.CABINETS, sup=sup,data=data)
+                cabinet = get_cabinet_by_id(target_name=para[2*(loopindex+1)], cabinets=data.CABINETS, sup=sup,data=data)
                 if (teacher is not None and course is not None and cabinet is not None):
-                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,
-                                    course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
+                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
                     pass
             loopindex = loopindex + 1
             pass
