@@ -14,9 +14,9 @@ from bs4 import BeautifulSoup
 import datetime
 from typing import *
 
+from main import Data
 from models import Group, Course, Teacher, Cabinet
-from supbase import getGroups, addGroup, initSupabase, getCourses, addCourse, getTeachers, getCabinets, addTeacher, \
-    addCabinet, addZamena, getParaNameAndTeacher
+from supbase import getGroups, addGroup, initSupabase, getCourses, addCourse, getTeachers, getCabinets, addTeacher, addCabinet, addZamena, getParaNameAndTeacher
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 BASEURL = 'https://www.uksivt.ru/'
@@ -30,7 +30,7 @@ from docx.document import Document as DocumentType
 from docx.table import Table
 
 
-def parseParas(filename: str, date, sup):
+def parseParas(filename: str, date, sup,data):
     cv = Converter(f'{filename}.pdf')
     cv.convert('schedule' + '.docx', start=0, end=None)
     cv.close()
@@ -42,10 +42,8 @@ def parseParas(filename: str, date, sup):
             filter = text.split(' ')
             groups.append(filter[-1])
 
-    sup = initSupabase()
-    gr = getGroups(sup=sup)
     for i in groups:
-        if get_group_by_id(target_name=i, sup=sup, groups=gr):
+        if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS,data=data):
             pass
 
     tables = []
@@ -70,11 +68,6 @@ def parseParas(filename: str, date, sup):
     temp = clearSingleStrings(temp)
 
     divided = defineGroups(groups, temp)
-
-    courses = getCourses(sup=sup)
-    teachers = getTeachers(sup=sup)
-    cabinets = getCabinets(sup=sup)
-
     for gruppa in divided:
         paras = divided[gruppa]
         divided[gruppa] = removeDuplicates(paras)
@@ -82,15 +75,15 @@ def parseParas(filename: str, date, sup):
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
-        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=gr, sup=sup, ), paras=divided[gruppa],
-                         sup=sup, courses=courses, teachers=teachers, cabinets=cabinets, startday=date)
+        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup,data=data), paras=divided[gruppa],sup=sup, startday=date,data=data)
     pass
 
-def parseZamenas(filename: str, date,sup):
+
+def parseZamenas(filename: str, date, sup, data):
     all_rows = get_all_tables(filename)
     workRows = []
     for i in all_rows:
-        if(not is_nested(i)):
+        if (not is_nested(i)):
             workRows.extend(i)
         else:
             workRows.append(i)
@@ -101,8 +94,8 @@ def parseZamenas(filename: str, date,sup):
     iteration = 0
     for i in workRows:
         iteration = iteration + 1
-        if(i[0] == ''):
-            i[0] = workRows[iteration-2][0]
+        if (i[0] == ''):
+            i[0] = workRows[iteration - 2][0]
 
     cleaned = []
     for i in workRows:
@@ -112,14 +105,14 @@ def parseZamenas(filename: str, date,sup):
         i.pop(2)
 
     for i in workRows:
-        if(i[0] == i[1] and i[2] == i[3]):
+        if (i[0] == i[1] and i[2] == i[3]):
             workRows.remove(i)
 
     editet = []
     for i in workRows:
         paras = i[1].split(',')
         row = i.copy()
-        if(len(paras) >= 2):
+        if (len(paras) >= 2):
             for para in paras:
                 new = row.copy()
                 new[1] = para
@@ -129,49 +122,37 @@ def parseZamenas(filename: str, date,sup):
 
     workRows = editet
 
-    #swap group names to their ID
-    groups = getGroups(sup=sup)
-    courses = getCourses(sup=sup)
-    teachers = getTeachers(sup=sup)
-    cabinets = getCabinets(sup=sup)
-
-    # for i in workRows:
-    #     print(i)
-
     for row in workRows:
-        group = get_group_by_id(groups,row[0],sup=sup)
+        group = get_group_by_id(data.GROUPS, row[0], sup=sup,data=data)
         if group is not None:
             row[0] = group.id
 
-
     for row in workRows:
-        course = get_course_by_id(courses,row[2],sup=sup)
+        course = get_course_by_id(data.COURSES, row[2], sup=sup,data=data)
         if course is not None:
             row[2] = course.id
 
-
     for row in workRows:
-        teacher = get_teacher_by_id(teachers,row[3],sup=sup)
-        print(teacher)
+        teacher = get_teacher_by_id(data.TEACHERS, row[3], sup=sup,data=data)
         if teacher is not None:
             row[3] = teacher.id
 
     for row in workRows:
-        cabinet = get_cabinet_by_id(cabinets,row[4],sup=sup)
+        cabinet = get_cabinet_by_id(data.CABINETS, row[4], sup=sup,data=data)
         if cabinet is not None:
             row[4] = cabinet.id
 
-
     for i in workRows:
-        addZamena(sup=sup,group=i[0],number=i[1],course=i[2],teacher=i[3],cabinet=i[4],date=date)
+        addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
         pass
 
     pass
 
+
 def removeDoubleRows(table):
     alreadyExist = []
     for row in table:
-        if(not row in alreadyExist):
+        if (not row in alreadyExist):
             alreadyExist.append(row)
     return alreadyExist
 
@@ -180,15 +161,15 @@ def removeDuplicates(table):
     index = 0
     cleared = []
     for row in table:
-        if((table[index-1])[0] == row[0]):
+        if ((table[index - 1])[0] == row[0]):
             continue
         else:
             cleared.append(row)
-            index = index+1
+            index = index + 1
     return cleared
 
 
-def ParasGroupToSoup(group,paras,startday,sup,courses,teachers,cabinets):
+def ParasGroupToSoup(group, paras, startday, sup,data:Data):
     print()
     print(group)
     print()
@@ -196,27 +177,30 @@ def ParasGroupToSoup(group,paras,startday,sup,courses,teachers,cabinets):
     for para in paras:
         number = para[0]
         print(para)
-        ParaMonday : str = para[1]
-        paraTuesday : str = para[3]
-        paraWednesday : str = para[5]
-        paraThursday : str = para[7]
-        paraFriday : str = para[9]
-        paraSaturday : str = para[11]
-        days = [ParaMonday,paraTuesday,paraWednesday,paraThursday,paraFriday,paraSaturday]
+        ParaMonday: str = para[1]
+        paraTuesday: str = para[3]
+        paraWednesday: str = para[5]
+        paraThursday: str = para[7]
+        paraFriday: str = para[9]
+        paraSaturday: str = para[11]
+        days = [ParaMonday, paraTuesday, paraWednesday, paraThursday, paraFriday, paraSaturday]
 
         loopindex = 0
         for day in days:
             aww = getParaNameAndTeacher(day)
             if aww is not None:
-                teacher = get_teacher_by_id(target_name=aww[0],teachers=teachers,sup=sup)
-                course = get_course_by_id(target_name=aww[1], courses=courses,sup=sup)
-                cabinet = get_cabinet_by_id(target_name=para[2],cabinets=cabinets,sup=sup)
-                if(teacher is not None and course is not None and cabinet is not None):
-                    supbase.addPara(group=group.id,number=number,teacher=teacher.id,cabinet=cabinet.id,course=course.id,date=str(date + datetime.timedelta(days=loopindex)),sup=sup)
+                teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup,data=data)
+                course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup,data=data)
+                #fix here
+                cabinet = get_cabinet_by_id(target_name=para[2], cabinets=data.CABINETS, sup=sup,data=data)
+                if (teacher is not None and course is not None and cabinet is not None):
+                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,
+                                    course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
                     pass
-            loopindex = loopindex+1
+            loopindex = loopindex + 1
             pass
     pass
+
 
 def recoverTeachers(table):
     aww = 0
@@ -244,15 +228,16 @@ def recoverTeachers(table):
         aww += 1
     return table
 
-def defineGroups(groups,table):
+
+def defineGroups(groups, table):
     groupIndex = -1
     groupParas = []
     group = 'x'
     divided = {}
     for row in table:
-        if(row[0]== '№'):
+        if (row[0] == '№'):
             divided[group] = groupParas
-            groupIndex = groupIndex+1
+            groupIndex = groupIndex + 1
             group = groups[groupIndex]
             groupParas = []
         else:
@@ -276,32 +261,34 @@ def clearSingleStrings(table):
 def clearDiscipline(table):
     for row in table:
         if (len(row) >= 12):
-                if(row[0] == '' and row[1] == '' and row[2] == '' and row[3] == '' and row[4] == '' and row[5] == '' and row[6] == ''):
-                    table.remove(row)
-                    continue
-                if(row[1].__contains__("Дисциплина, вид занятия, преподаватель")):
-                    table.remove(row)
-                    continue
-                pass
+            if (row[0] == '' and row[1] == '' and row[2] == '' and row[3] == '' and row[4] == '' and row[5] == '' and
+                    row[6] == ''):
+                table.remove(row)
+                continue
+            if (row[1].__contains__("Дисциплина, вид занятия, преподаватель")):
+                table.remove(row)
+                continue
+            pass
     return table
 
 
-def get_cabinet_by_id(cabinets, target_name,sup) -> Cabinet:
+def get_cabinet_by_id(cabinets, target_name, sup,data) -> Cabinet:
     for cabinet in cabinets:
         if cabinet.name == target_name:
             return cabinet
+        else:
+            continue
     try:
-        addCabinet(target_name,sup=sup)
-        new_cabinets = getCabinets(sup=sup)
-        get_cabinet_by_id(cabinets=new_cabinets,target_name=target_name,sup=sup)
+        addCabinet(target_name, sup=sup,data=data)
+        return get_cabinet_by_id(cabinets=data.CABINETS, target_name=target_name, sup=sup,data=data)
     except:
         return None
     return None
 
 
-def get_teacher_from_short_name(teachers : List[Teacher], shortName : str):
+def get_teacher_from_short_name(teachers: List[Teacher], shortName: str):
     for i in teachers:
-        fio : List[str] = i.name.split(' ')
+        fio: List[str] = i.name.split(' ')
         if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
             compare_result = f"{fio[0]} {fio[1][0]}.{fio[2][0]}."
             if compare_result.lower().strip() == shortName.lower().strip():
@@ -309,46 +296,49 @@ def get_teacher_from_short_name(teachers : List[Teacher], shortName : str):
     return None
 
 
-def get_teacher_by_id(teachers, target_name,sup) -> Teacher:
+def get_teacher_by_id(teachers, target_name, sup,data) -> Teacher:
     for teacher in teachers:
         if teacher.name == target_name:
             return teacher
         else:
-            search = get_teacher_from_short_name(teachers=teachers,shortName=target_name)
+            search = get_teacher_from_short_name(teachers=teachers, shortName=target_name)
             if search is not None:
                 return search
     try:
-        addTeacher(target_name,sup=sup)
-        new_teachers = getTeachers(sup=sup)
-        return get_teacher_by_id(teachers=new_teachers, target_name=target_name, sup=sup)
+        addTeacher(target_name, sup=sup,data=data)
+        return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup,data=data)
     except:
         return None
     return None
 
 
-def get_group_by_id(groups, target_name,sup) -> Group:
+def get_group_by_id(groups, target_name, sup,data) -> Group:
     for group in groups:
         if group.name == target_name:
             return group
+        else:
+            continue
     try:
-        addGroup(target_name,sup=sup)
-        new_groups = getGroups(sup=sup)
-        return get_group_by_id(groups=new_groups,target_name=target_name,sup=sup)
+        addGroup(target_name, sup=sup,data=data)
+        return get_group_by_id(groups=data.GROUPS, target_name=target_name, sup=sup,data=data)
     except:
         return None
     return None
 
-def get_course_by_id(courses, target_name,sup) -> Course:
+
+def get_course_by_id(courses, target_name, sup,data) -> Course:
     for course in courses:
         if course.name == target_name:
             return course
+        else:
+            continue
     try:
-        addCourse(target_name,sup=sup)
-        new_course = getCourses(sup=sup)
-        return get_course_by_id(new_course, target_name=target_name,sup=sup)
+        addCourse(target_name, sup=sup,data=data)
+        return get_course_by_id(data.COURSES, target_name=target_name, sup=sup,data=data)
     except:
         return None
     return None
+
 
 def extract_all_tables_to_rows(tables: List[Table]) -> List[List[str]]:
     rows = []
@@ -365,8 +355,10 @@ def extract_all_tables_to_rows(tables: List[Table]) -> List[List[str]]:
             rows.append(data)
     return rows
 
+
 def is_nested(row: List[str]) -> bool:
     return isinstance(row, List) and all(isinstance(item, str) for item in row)
+
 
 def remove_duplicates(input_list):
     unique_list = []
@@ -375,9 +367,11 @@ def remove_duplicates(input_list):
             unique_list.append(sublist)
     return unique_list
 
+
 def check_family(i):
-    if (len(i[1].split(' ')) > 2) or (len(i[3].split(' ')) > 2) or (len(i[5].split(' ')) > 2) or (len(i[7].split(' ')) > 2) or (len(i[9].split(' ')) > 2) or (len(i[11].split(' ')) > 2):
-        if ( i[2] == '' and i[4] == '' and i[6] == '' and i[8] == '' and i[10] == '' and i[12] == ''):
+    if (len(i[1].split(' ')) > 2) or (len(i[3].split(' ')) > 2) or (len(i[5].split(' ')) > 2) or (
+            len(i[7].split(' ')) > 2) or (len(i[9].split(' ')) > 2) or (len(i[11].split(' ')) > 2):
+        if (i[2] == '' and i[4] == '' and i[6] == '' and i[8] == '' and i[10] == '' and i[12] == ''):
             return True
     return False
 
@@ -389,15 +383,16 @@ def remove_headers(rows):
             cleared.append(i)
     return cleared
 
+
 def get_all_tables(filename: str) -> List[List[str]]:
     doc: DocumentType = Document(filename)
     tables = doc.tables
     all_rows = extract_all_tables_to_rows(tables)
     return all_rows
 
+
 def clear_empty_sublists(nested_list: List[List[str]]) -> List[List[str]]:
     return [sublist for sublist in nested_list if any(item != '' for item in sublist)]
-
 
 
 def clearNonDataRows(rows: List[List[str]]) -> List[List[str]]:
@@ -405,8 +400,7 @@ def clearNonDataRows(rows: List[List[str]]) -> List[List[str]]:
     return filtered_rows
 
 
-
-def downloadFile(link:str,filename:str):
+def downloadFile(link: str, filename: str):
     response = requests.get(link)
     if response.status_code == 200:
         with open(filename, 'wb') as file:
@@ -418,12 +412,13 @@ def downloadFile(link:str,filename:str):
 
 def getLastZamenaLink(soup: BeautifulSoup):
     days = getMonthAvalibleDays(soup=soup, monthIndex=0)
-    return urllib.parse.urljoin(BASEURL,getDaylink(soup=soup, monthIndex=0, day=days[-1]))
+    return urllib.parse.urljoin(BASEURL, getDaylink(soup=soup, monthIndex=0, day=days[-1]))
+
 
 def getLastZamenaDate(soup: BeautifulSoup):
     days = getMonthAvalibleDays(soup=soup, monthIndex=0)
     month, year = str(getMonthsList(soup=soup)[0]).split(' ')
-    date = datetime.date(2024,convertMonthNameToIndex(month)+1,days[-1])
+    date = datetime.date(2024, convertMonthNameToIndex(month) + 1, days[-1])
     return date
 
 
@@ -439,8 +434,10 @@ def getDaylink(soup: BeautifulSoup, monthIndex: int, day: int):
                 if (text.isdigit() and int(text) == day):
                     return link.get('href')
 
+
 def convertMonthNameToIndex(name):
-    months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+    months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь',
+              'Декабрь']
     return months.index(name)
 
 

@@ -1,9 +1,11 @@
 import json
+import random
 from datetime import datetime
 
 import supabase
 from supabase import create_client, Client
 
+from main import Data
 from models import Group, Course, Cabinet, Teacher
 
 
@@ -33,23 +35,29 @@ def addNewZamenaFileLink(link: str, date):
     return response
 
 
-def addGroup(name,sup):
+def addGroup(name,sup,data:Data):
     response = sup.table("Groups").insert({"name":name,"department":0}).execute()
+    data.GROUPS = getGroups(sup=sup)
     print(response)
 
 
-def addCourse(name,sup):
-    response = sup.table("Courses").insert({"name":name,"color":"0,0,0,0"}).execute()
+def addCourse(name,sup,data:Data):
+    rnd = random.Random()
+    color = f'{255},{rnd.randint(0, 255)},{rnd.randint(0, 255)},{rnd.randint(0, 255)}'
+    response = sup.table("Courses").insert({"name":name,"color":color}).execute()
+    data.COURSES = getCourses(sup=sup)
     print(response)
 
 
-def addTeacher(name,sup):
+def addTeacher(name,sup,data:Data):
     response = sup.table("Teachers").insert({"name":name}).execute()
+    data.TEACHERS = getTeachers(sup=sup)
     print(response)
 
 
-def addCabinet(name,sup):
+def addCabinet(name,sup,data:Data):
     response = sup.table("Cabinets").insert({"name":name}).execute()
+    data.CABINETS = getCabinets(sup=sup)
     print(response)
 
 

@@ -1,36 +1,36 @@
-import random
-from urllib.request import urlopen, urlretrieve
 import supabase
 from bs4 import BeautifulSoup
 from downloader import *
-from pdf2docx import Converter , Page
+from pdf2docx import Converter, Page
 from pdf2docx import *
-import urllib.parse
-import requests
-from functions import *
 from supbase import *
-from models import *
-from tabulate import tabulate
 import datetime
+
+
+class Data:
+    GROUPS = []
+    CABINETS = []
+    TEACHERS = []
+    COURSES = []
+
 
 if __name__ == '__main__':
     html = urlopen(SCHEDULE_URL).read()
-    soup : BeautifulSoup = BeautifulSoup(html, 'html.parser')
+    soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
 
-    #file = getLatestSchedleFile()
-    #print(f'latest month {getLatestScheduleMonth()}')
-    #print(f'latest month day link {getLatestSchedleFile()}')
+    # file = getLatestSchedleFile()
+    # print(f'latest month {getLatestScheduleMonth()}')
+    # print(f'latest month day link {getLatestSchedleFile()}')
 
-    #print(getDaylink(soup=soup,monthIndex=0,day=23))
-    #downloadFile(link=link,filename='last.docx')
-    #print(getFileHash('last.docx'))
-    #print(getParsedsHashes())
-
+    # print(getDaylink(soup=soup,monthIndex=0,day=23))
+    # downloadFile(link=link,filename='last.docx')
+    # print(getFileHash('last.docx'))
+    # print(getParsedsHashes())
 
     # #print(getMonthAvalibleDays(soup=soup, monthIndex=0))
     # downloadFile(link=link, filename=f"date.pdf")
 
-    #link = getLastZamenaLink(soup=soup)
+    # link = getLastZamenaLink(soup=soup)
     # date = getLastZamenaDate(soup=soup)
     # filename="zam-23"
     # downloadFile(link=link, filename=filename+".pdf")
@@ -42,14 +42,26 @@ if __name__ == '__main__':
     # addNewZamenaFileLink(link,date=date)
 
     sup = initSupabase()
+    data = Data
+    data.GROUPS = getGroups(sup=sup)
+    data.CABINETS = getCabinets(sup=sup)
+    data.TEACHERS = getTeachers(sup=sup)
+    data.COURSES = getCourses(sup=sup)
     date = datetime.date(2024,1,15)
-    parseParas(filename='schedule',date=date,sup=sup)
+    parseParas(filename='rasp15',date=date,sup=sup,data=data)
 
+    date = datetime.date(2024, 1, 22)
+    parseParas(filename='rasp22', date=date, sup=sup, data=data)
+
+    date = datetime.date(2024, 1, 24)
+    parseZamenas("zam-24.docx",date,sup=sup,data=data)
+
+    date = datetime.date(2024, 1, 23)
+    parseZamenas("zam-23.docx", date, sup=sup, data=data)
+
+    date = datetime.date(2024, 1, 22)
+    parseZamenas("zam-22.docx", date, sup=sup, data=data)
     pass
-
-
-
-
 
 # def extract_tables_from_docx(docx_path):
 #     doc = docx.Document(docx_path)
@@ -104,7 +116,7 @@ if __name__ == '__main__':
 
 
 # Replace with your downloaded .docx file path
-#docx_file = filename
+# docx_file = filename
 # docx_file = "Декабрь_6.docx"
 # rows = []
 #
