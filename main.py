@@ -17,6 +17,12 @@ class Data:
 if __name__ == '__main__':
     html = urlopen(SCHEDULE_URL).read()
     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
+    sup = initSupabase()
+    data = Data
+    data.GROUPS = getGroups(sup=sup)
+    data.CABINETS = getCabinets(sup=sup)
+    data.TEACHERS = getTeachers(sup=sup)
+    data.COURSES = getCourses(sup=sup)
 
     # file = getLatestSchedleFile()
     # print(f'latest month {getLatestScheduleMonth()}')
@@ -40,27 +46,19 @@ if __name__ == '__main__':
     # date = datetime.date(2024, 1, 23)
     # parseZamenas(f'{filename}.docx',date=date,sup=initSupabase())
     # addNewZamenaFileLink(link,date=date)
+    #
 
-    sup = initSupabase()
-    data = Data
-    data.GROUPS = getGroups(sup=sup)
-    data.CABINETS = getCabinets(sup=sup)
-    data.TEACHERS = getTeachers(sup=sup)
-    data.COURSES = getCourses(sup=sup)
-    date = datetime.date(2024,1,15)
-    parseParas(filename='rasp15',date=date,sup=sup,data=data)
+    #
+    # parseParas('rasp29',date=datetime.date(2024,1,29),sup=sup,data=data)
 
-    date = datetime.date(2024, 1, 22)
-    parseParas(filename='rasp22', date=date, sup=sup, data=data)
-
-    date = datetime.date(2024, 1, 24)
-    parseZamenas("zam-24.docx",date,sup=sup,data=data)
-
-    date = datetime.date(2024, 1, 23)
-    parseZamenas("zam-23.docx", date, sup=sup, data=data)
-
-    date = datetime.date(2024, 1, 22)
-    parseZamenas("zam-22.docx", date, sup=sup, data=data)
+    # link = getLastZamenaLink(soup=soup)
+    # filename="zam-26"
+    # downloadFile(link=link, filename=filename+".pdf")
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert(f'{filename}.docx', start=0, end=None)
+    # cv.close()
+    date = datetime.date(2024, 1, 26)
+    parseZamenas("zam-26.docx", date, sup=sup, data=data)
     pass
 
 # def extract_tables_from_docx(docx_path):

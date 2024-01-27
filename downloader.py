@@ -16,7 +16,7 @@ from typing import *
 
 from main import Data
 from models import Group, Course, Teacher, Cabinet
-from supbase import getGroups, addGroup, initSupabase, getCourses, addCourse, getTeachers, getCabinets, addTeacher, addCabinet, addZamena, getParaNameAndTeacher
+from supbase import getGroups, addGroup, initSupabase, getCourses, addCourse, getTeachers, getCabinets, addTeacher, addCabinet, addZamena, getParaNameAndTeacher, addFullZamenaGroup
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 BASEURL = 'https://www.uksivt.ru/'
@@ -31,9 +31,9 @@ from docx.table import Table
 
 
 def parseParas(filename: str, date, sup,data):
-    # cv = Converter(f'{filename}.pdf')
-    # cv.convert('schedule' + '.docx', start=0, end=None)
-    # cv.close()
+    cv = Converter(f'{filename}.pdf')
+    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -91,11 +91,17 @@ def parseZamenas(filename: str, date, sup, data):
     workRows = clear_empty_sublists(workRows)
     workRows = remove_headers(workRows)
 
+    fullzamenagroups = []
+
     iteration = 0
     for i in workRows:
         iteration = iteration + 1
         if (i[0] == ''):
             i[0] = workRows[iteration - 2][0]
+
+    for i in workRows:
+        if(i.count(i[0]) == len(i)):
+            fullzamenagroups.append(i[0].strip().replace(' ',""))
 
     cleaned = []
     for i in workRows:
@@ -143,9 +149,11 @@ def parseZamenas(filename: str, date, sup, data):
             row[4] = cabinet.id
 
     for i in workRows:
-        addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
+        #addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
         pass
 
+    for i in fullzamenagroups:
+        addFullZamenaGroup(sup=sup, group=get_group_by_id(target_name=i,data=data,groups=data.GROUPS,sup=sup).id,date=date)
     pass
 
 

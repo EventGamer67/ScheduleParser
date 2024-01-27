@@ -101,3 +101,8 @@ def getCourses(sup):
 def addZamena(sup,group,number,course,teacher,cabinet,date):
     response = sup.table("Zamenas").insert({"group": group,'number':int(number),'course':course,'teacher':teacher,'cabinet':cabinet,'date':str(date)}).execute()
     print(response)
+
+
+def addFullZamenaGroup(sup,group,date):
+    response = sup.table("ZamenasFull").insert({"group": group,'date':str(date)}).execute()
+    print(response)
