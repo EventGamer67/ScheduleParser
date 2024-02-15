@@ -31,9 +31,9 @@ from docx.table import Table
 
 
 def parseParas(filename: str, date, sup,data):
-    cv = Converter(f'{filename}.pdf')
-    cv.convert('schedule' + '.docx', start=0, end=None)
-    cv.close()
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert('schedule' + '.docx', start=0, end=None)
+    # cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -429,15 +429,11 @@ def getLastZamenaDate(soup: BeautifulSoup):
 
 def getDaylink(soup: BeautifulSoup, monthIndex: int, day: int):
     table = getMonthTable(soup=soup, monthIndex=monthIndex)
-    rows = table.find_all('tr')
-    for row in rows:
-        cells = row.find_all('td')
-        for cell in cells:
-            link = cell.find('a')
-            text = cell.get_text()
-            if (link):
-                if (text.isdigit() and int(text) == day):
-                    return link.get('href')
+    for link in table.find_all('a'):
+        text = link.get_text()
+        if (link):
+            if (text.isdigit() and int(text) == day):
+                return link.get('href')
 
 
 def convertMonthNameToIndex(name):
@@ -447,31 +443,35 @@ def convertMonthNameToIndex(name):
 
 
 def getMonthTable(soup: BeautifulSoup, monthIndex: int):
-    tables = soup.find_all('table', {'class': 'calendar-month'})
-    return tables[monthIndex]
+    newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
+    oldtables = soup.find_all('table', {'class': 'calendar-month'})
+    newtables.extend(oldtables)
+    return newtables[monthIndex]
 
 
 def getMonthAvalibleDays(soup: BeautifulSoup, monthIndex: int):
-    table = getMonthTable(soup=soup, monthIndex=monthIndex)
-    rows = table.find_all('tr')
     days = []
-    for row in rows:
-        cells = row.find_all('td')
-        for cell in cells:
-            link = cell.find('a')
-            if (cell.get_text().isdigit()):
-                if (link):
-                    days.append(int(cell.get_text()))
+    table = getMonthTable(soup=soup, monthIndex=monthIndex)
+    links = table.find_all('a')
+    for link in links:
+        if (link.get_text().isdigit()):
+            if (link):
+                days.append(int(link.get_text()))
     return days
 
 
-def getMonthsList(soup):
-    table = soup.find('table', {'class': 'ui-datepicker-calendar'})
+def getMonthsList(soup : BeautifulSoup):
     paragraphs_with_class = soup.find_all("p", class_="MsoNormal")
     list = []
     for par in paragraphs_with_class:
-        if (par.get_text(strip=True) != '' and par.get_text(strip=True) is not None and par.get_text(strip=True)):
+        paragraphText = par.get_text(strip=True)
+        if (paragraphText != '' and paragraphText is not None and not paragraphText.isdigit() and paragraphText not in ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']):
             list.append(par.get_text(strip=True))
+    index = 0
+    for month in list:
+        if len(month.split(' ')) == 1:
+            list[index] = f"{month} {list[index+1].split(' ')[1]}"
+        index = index+1
     return list
 
 

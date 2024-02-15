@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 from downloader import *
 from pdf2docx import Converter, Page
 from pdf2docx import *
+
+from parserV2 import parserv2
 from supbase import *
 import datetime
 
@@ -23,6 +25,12 @@ if __name__ == '__main__':
     data.CABINETS = getCabinets(sup=sup)
     data.TEACHERS = getTeachers(sup=sup)
     data.COURSES = getCourses(sup=sup)
+
+    #print(getMonthTable(soup=soup,monthIndex=0))
+    #print(getMonthsList(soup))
+    #print(getMonthAvalibleDays(soup=soup,monthIndex=0))
+    print(getLastZamenaLink(soup=soup))
+    #parserv2(soup=soup)
 
     # file = getLatestSchedleFile()
     # print(f'latest month {getLatestScheduleMonth()}')
@@ -49,16 +57,19 @@ if __name__ == '__main__':
     #
 
     #
-    # parseParas('rasp29',date=datetime.date(2024,1,29),sup=sup,data=data)
+    #parseParas('rasp29',date=datetime.date(2024,2,5), sup=sup,data=data)
+    #parseParas('rasp29', date=datetime.date(2024, 2, 12), sup=sup, data=data)
+    #parseParas('rasp29', date=datetime.date(2024, 2, 19), sup=sup, data=data)
 
     # link = getLastZamenaLink(soup=soup)
+    # print(link)
     # filename="zam-26"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    date = datetime.date(2024, 1, 26)
-    parseZamenas("zam-26.docx", date, sup=sup, data=data)
+    #date = datetime.date(2024, 1, 26)
+    #parseZamenas("zam-26.docx", date, sup=sup, data=data)
     pass
 
 # def extract_tables_from_docx(docx_path):
