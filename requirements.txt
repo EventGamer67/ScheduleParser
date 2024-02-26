@@ -2,4 +2,4 @@ supabase
 pdf2docx
 typing
 docx
-BeautifulSoup
+beautifulsoup4
