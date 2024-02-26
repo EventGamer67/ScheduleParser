@@ -3,3 +3,4 @@ pdf2docx
 typing
 docx
 beautifulsoup4
+requests
