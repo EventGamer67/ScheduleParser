@@ -4,3 +4,4 @@ typing
 docx
 beautifulsoup4
 requests
+apscheduler
