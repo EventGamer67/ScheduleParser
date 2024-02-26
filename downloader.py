@@ -1,29 +1,18 @@
 import urllib
-from xmlrpc.client import DateTime
-
-import docx
 import requests
-import supabase
 from pdf2docx import Converter
 
 import supbase
-
-from functions import *
-from urllib.request import urlopen, urlretrieve
+from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import datetime
-from typing import *
-
-from main import Data
 from models import Group, Course, Teacher, Cabinet
-from supbase import getGroups, addGroup, initSupabase, getCourses, addCourse, getTeachers, getCabinets, addTeacher, addCabinet, addZamena, getParaNameAndTeacher, addFullZamenaGroup
+from supbase import addGroup, addCourse, addTeacher, addCabinet, getParaNameAndTeacher, addFullZamenaGroup
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
-BASEURL = 'https://www.uksivt.ru/'
+#SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
 
-from docx import *
-from docx.document import Document as DocumentType
-from docx.table import _Row
+BASEURL = 'https://www.uksivt.ru/'
 from typing import List
 from docx import Document
 from docx.document import Document as DocumentType
@@ -31,9 +20,9 @@ from docx.table import Table
 
 
 def parseParas(filename: str, date, sup,data):
-    # cv = Converter(f'{filename}.pdf')
-    # cv.convert('schedule' + '.docx', start=0, end=None)
-    # cv.close()
+    cv = Converter(f'{filename}.pdf')
+    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -149,7 +138,7 @@ def parseZamenas(filename: str, date, sup, data):
             row[4] = cabinet.id
 
     for i in workRows:
-        #addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
+        supbase.addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
         pass
 
     for i in fullzamenagroups:
@@ -177,7 +166,7 @@ def removeDuplicates(table):
     return cleared
 
 
-def ParasGroupToSoup(group, paras, startday, sup,data:Data):
+def ParasGroupToSoup(group, paras, startday, sup,data):
     print()
     print(group)
     print()
@@ -415,6 +404,10 @@ def downloadFile(link: str, filename: str):
         print("Failed to download the file.")
 
 
+def getAllLinks(soup: BeautifulSoup):
+    pass
+
+
 def getLastZamenaLink(soup: BeautifulSoup):
     days = getMonthAvalibleDays(soup=soup, monthIndex=0)
     return urllib.parse.urljoin(BASEURL, getDaylink(soup=soup, monthIndex=0, day=days[-1]))
@@ -447,6 +440,26 @@ def getMonthTable(soup: BeautifulSoup, monthIndex: int):
     oldtables = soup.find_all('table', {'class': 'calendar-month'})
     newtables.extend(oldtables)
     return newtables[monthIndex]
+
+
+def getAllMonthTables(soup: BeautifulSoup):
+    newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
+    print(newtables)
+    oldtables = soup.find_all('table', {'class': 'calendar-month'})
+    newtables.extend(oldtables)
+    return newtables
+
+
+def getAllTablesLinks(tables):
+    links = []
+    for table in tables:
+        tags = table.find_all('a')
+        for tag in tags:
+            text = tag.get_text()
+            if (tag):
+                if text.isdigit():
+                    links.append(tag.get('href'))
+    return links
 
 
 def getMonthAvalibleDays(soup: BeautifulSoup, monthIndex: int):

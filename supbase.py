@@ -1,11 +1,10 @@
 import json
 import random
 from datetime import datetime
+from typing import List
 
 import supabase
 from supabase import create_client, Client
-
-from main import Data
 from models import Group, Course, Cabinet, Teacher
 
 
@@ -29,19 +28,31 @@ def addPara(sup : Client,group,number,course,teacher,cabinet,date):
     sup.table('Paras').insert({'group':group,'number':number,'course':course,'teacher':teacher,'cabinet':cabinet,'date':date}).execute()
     pass
 
+
 def addNewZamenaFileLink(link: str, date):
     sup = initSupabase()
     response = sup.table("ZamenaFileLinks").insert({"link":link,"date":str(date)}).execute()
     return response
 
 
-def addGroup(name,sup,data:Data):
+def GetZamenaFileLinks() -> List[str]:
+    sup = initSupabase()
+    response = sup.table("ZamenaFileLinks").select('*').execute()
+    print(response)
+    links = []
+    for i in response.data:
+        links.append(i["link"].strip())
+    print(links)
+    return links
+
+
+def addGroup(name,sup,data):
     response = sup.table("Groups").insert({"name":name,"department":0}).execute()
     data.GROUPS = getGroups(sup=sup)
     print(response)
 
 
-def addCourse(name,sup,data:Data):
+def addCourse(name,sup,data):
     rnd = random.Random()
     color = f'{255},{rnd.randint(0, 255)},{rnd.randint(0, 255)},{rnd.randint(0, 255)}'
     response = sup.table("Courses").insert({"name":name,"color":color}).execute()
@@ -49,13 +60,13 @@ def addCourse(name,sup,data:Data):
     print(response)
 
 
-def addTeacher(name,sup,data:Data):
+def addTeacher(name,sup,data):
     response = sup.table("Teachers").insert({"name":name}).execute()
     data.TEACHERS = getTeachers(sup=sup)
     print(response)
 
 
-def addCabinet(name,sup,data:Data):
+def addCabinet(name,sup,data):
     response = sup.table("Cabinets").insert({"name":name}).execute()
     data.CABINETS = getCabinets(sup=sup)
     print(response)

@@ -59,16 +59,16 @@ if __name__ == '__main__':
     #
     #parseParas('rasp29',date=datetime.date(2024,2,5), sup=sup,data=data)
     #parseParas('rasp29', date=datetime.date(2024, 2, 12), sup=sup, data=data)
-    #parseParas('rasp29', date=datetime.date(2024, 2, 19), sup=sup, data=data)
+    #parseParas('29.01', date=datetime.date(2024, 2, 26), sup=sup, data=data)
 
-    # link = getLastZamenaLink(soup=soup)
+    #link = getLastZamenaLink(soup=soup)
     # print(link)
     # filename="zam-26"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    #date = datetime.date(2024, 1, 26)
+    #date = datetime.date(2024, 2, 26)
     #parseZamenas("zam-26.docx", date, sup=sup, data=data)
     pass
 
