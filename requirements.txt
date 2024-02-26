@@ -4,4 +4,5 @@ typing
 docx
 beautifulsoup4
 requests
+aiogram
 apscheduler
