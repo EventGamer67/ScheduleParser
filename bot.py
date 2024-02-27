@@ -33,9 +33,10 @@ async def checkNew(bot: Bot):
     siteLinks = getAllTablesLinks(getAllMonthTables(soup=soup))
     databaseLinks = GetZamenaFileLinks()
     if (siteLinks.__eq__(databaseLinks)):
-        subs = await r.lrange("subs", 0, -1)
-        for i in subs:
-            await bot.send_message(chat_id=i, text="Нет новых")
+        pass
+        # subs = await r.lrange("subs", 0, -1)
+        # for i in subs:
+        #     await bot.send_message(chat_id=i, text="Нет новых")
     else:
         text = ""
         alreadyFound = await r.lrange("alreadyFound", 0, -1)
