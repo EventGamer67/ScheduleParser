@@ -51,21 +51,21 @@ async def checkNew(bot: Bot):
             await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
 
 
-@dp.message(F.text, Command("check"))
-async def my_handler(message: Message):
-    html = urlopen(SCHEDULE_URL).read()
-    soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-    siteLinks = getAllTablesLinks(getAllMonthTables(soup=soup))
-    databaseLinks = GetZamenaFileLinks()
-    if (siteLinks.__eq__(databaseLinks)):
-        await message.answer("Нет новых")
-    else:
-        text = ""
-        for link in list(set(siteLinks) - set(databaseLinks)):
-            # text += (f' \n <a href="{link}">Неизвестная дата</a>')
-            text += (f' \n {link}')
-
-        await message.answer(f"Новые замены \n {text}", parse_mode="HTML")
+# @dp.message(F.text, Command("check"))
+# async def my_handler(message: Message):
+#     html = urlopen(SCHEDULE_URL).read()
+#     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
+#     siteLinks = getAllTablesLinks(getAllMonthTables(soup=soup))
+#     databaseLinks = GetZamenaFileLinks()
+#     if (siteLinks.__eq__(databaseLinks)):
+#         await message.answer("Нет новых")
+#     else:
+#         text = ""
+#         for link in list(set(siteLinks) - set(databaseLinks)):
+#             # text += (f' \n <a href="{link}">Неизвестная дата</a>')
+#             text += (f' \n {link}')
+#
+#         await message.answer(f"Новые замены \n {text}", parse_mode="HTML")
 
 
 @dp.message(F.text, Command("sub"))
@@ -96,10 +96,9 @@ async def my_handlers(message: Message):
 
 @dp.message(F.text, Command("latest"))
 async def my_handler(message: Message):
-    await message.answer(str(message.chat.id))
-    # html = urlopen(SCHEDULE_URL).read()
-    # soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-    # await message.answer(getLastZamenaLink(soup=soup))
+    html = urlopen(SCHEDULE_URL).read()
+    soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
+    await message.answer(getLastZamenaLink(soup=soup))
 
 
 @dp.message(CommandStart())
@@ -112,7 +111,7 @@ async def command_start_handler(message: Message) -> None:
 async def main() -> None:
     bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(checkNew, "interval", minutes=2, args=(bot,))
+    scheduler.add_job(checkNew, "interval", minutes=30, args=(bot,))
     scheduler.start()
     await dp.start_polling(bot)
 
