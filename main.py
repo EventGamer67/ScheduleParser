@@ -1,4 +1,5 @@
 import supabase
+from aiogram.fsm.storage import redis
 from bs4 import BeautifulSoup
 from downloader import *
 from pdf2docx import Converter, Page
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     #print(getMonthTable(soup=soup,monthIndex=0))
     #print(getMonthsList(soup))
     #print(getMonthAvalibleDays(soup=soup,monthIndex=0))
-    print(getLastZamenaLink(soup=soup))
+    # print(getLastZamenaLink(soup=soup))
     #parserv2(soup=soup)
 
     # file = getLatestSchedleFile()
@@ -54,22 +55,24 @@ if __name__ == '__main__':
     # date = datetime.date(2024, 1, 23)
     # parseZamenas(f'{filename}.docx',date=date,sup=initSupabase())
     # addNewZamenaFileLink(link,date=date)
-    #
 
-    #
+    # siteLinks = getAllTablesLinks(getAllMonthTables(soup=soup))
+    # for i in siteLinks:
+    #     addNewZamenaFileLink(i,sup=sup,date=datetime.date(2024,2,5))
+
     #parseParas('rasp29',date=datetime.date(2024,2,5), sup=sup,data=data)
     #parseParas('rasp29', date=datetime.date(2024, 2, 12), sup=sup, data=data)
     #parseParas('29.01', date=datetime.date(2024, 2, 26), sup=sup, data=data)
 
-    #link = getLastZamenaLink(soup=soup)
+    # link = getLastZamenaLink(soup=soup)
     # print(link)
-    # filename="zam-26"
+    # filename="zam-27"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    #date = datetime.date(2024, 2, 26)
-    #parseZamenas("zam-26.docx", date, sup=sup, data=data)
+    # date = datetime.date(2024, 2, 27)
+    # parseZamenas("zam-27.docx", date, sup=sup, data=data)
     pass
 
 # def extract_tables_from_docx(docx_path):

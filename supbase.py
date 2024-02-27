@@ -29,8 +29,7 @@ def addPara(sup : Client,group,number,course,teacher,cabinet,date):
     pass
 
 
-def addNewZamenaFileLink(link: str, date):
-    sup = initSupabase()
+def addNewZamenaFileLink(link: str, date,sup):
     response = sup.table("ZamenaFileLinks").insert({"link":link,"date":str(date)}).execute()
     return response
 

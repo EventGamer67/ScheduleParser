@@ -458,7 +458,8 @@ def getAllTablesLinks(tables):
             text = tag.get_text()
             if (tag):
                 if text.isdigit():
-                    links.append(tag.get('href'))
+                    links.append( urllib.parse.urljoin("https://www.uksivt.ru/zameny/",tag.get('href')))
+
     return links
 
 
