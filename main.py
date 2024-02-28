@@ -66,13 +66,13 @@ if __name__ == '__main__':
 
     # link = getLastZamenaLink(soup=soup)
     # print(link)
-    # filename="zam-27"
+    # filename="zam-29"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    # date = datetime.date(2024, 2, 27)
-    # parseZamenas("zam-27.docx", date, sup=sup, data=data)
+    # date = datetime.date(2024, 2, 29)
+    # parseZamenas("zam-29.docx", date, sup=sup, data=data)
     pass
 
 # def extract_tables_from_docx(docx_path):

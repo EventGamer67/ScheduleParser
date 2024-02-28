@@ -44,13 +44,17 @@ async def checkNew(bot: Bot):
         if (len(new) < 1):
             return
         for link in new:
-            await r.lpush("subs", str(link))
+            await r.lpush("alreadyFound", str(link))
             # text += (f' \n <a href="{link}">Неизвестная дата</a>')
             text += (f' \n {link}')
         subs = await r.lrange("subs", 0, -1)
         for i in subs:
             await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
 
+
+@dp.message(F.text, Command("update"))
+async def my_update(bot: Bot):
+    await checkNew(bot=bot)
 
 # @dp.message(F.text, Command("check"))
 # async def my_handler(message: Message):
