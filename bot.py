@@ -5,6 +5,7 @@ from typing import List
 from urllib.request import urlopen
 import time
 
+from aiogram.client import bot
 from aiogram.fsm.storage import redis
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -53,8 +54,10 @@ async def checkNew(bot: Bot):
 
 
 @dp.message(F.text, Command("update"))
-async def my_update(bot: Bot):
-    await checkNew(bot=bot)
+async def my_update(messsage: Message):
+    await checkNew(bot=messsage.bot)
+    await messsage.reply("Проверил")
+
 
 # @dp.message(F.text, Command("check"))
 # async def my_handler(message: Message):
@@ -84,7 +87,6 @@ async def my_handlerr(message: Message):
             await message.answer("Вы уже подписаны")
     except Exception as error:
         await message.answer(f"Ошибка подписки\n{error}")
-
 
 
 
