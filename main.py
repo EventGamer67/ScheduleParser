@@ -66,13 +66,14 @@ if __name__ == '__main__':
 
     # link = getLastZamenaLink(soup=soup)
     # print(link)
-    # filename="zam-29"
+    # link = "https://www.uksivt.ru/storage/files/all/ZAMENY/март/02.03.pdf"
+    # filename="zam-02"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    # date = datetime.date(2024, 2, 29)
-    # parseZamenas("zam-29.docx", date, sup=sup, data=data)
+    # date = datetime.date(2024, 3, 2)
+    # parseZamenas("zam-02.docx", date, sup=sup, data=data)
     pass
 
 # def extract_tables_from_docx(docx_path):
