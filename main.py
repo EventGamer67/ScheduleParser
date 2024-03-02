@@ -60,13 +60,14 @@ if __name__ == '__main__':
     # for i in siteLinks:
     #     addNewZamenaFileLink(i,sup=sup,date=datetime.date(2024,2,5))
 
-    #parseParas('rasp29',date=datetime.date(2024,2,5), sup=sup,data=data)
+    #parseParas('29', date=datetime.date(2024,2,26), sup=sup, data=data)
+    #parseParas('29', date=datetime.date(2024, 3, 4), sup=sup, data=data)
     #parseParas('rasp29', date=datetime.date(2024, 2, 12), sup=sup, data=data)
     #parseParas('29.01', date=datetime.date(2024, 2, 26), sup=sup, data=data)
 
-    # link = getLastZamenaLink(soup=soup)
-    # print(link)
-    # link = "https://www.uksivt.ru/storage/files/all/ZAMENY/март/02.03.pdf"
+    #link = getLastZamenaLink(soup=soup)
+    #print(link)
+    # link = "https://www.uksivt.ru//storage/files/all/ZAMENY/%D0%BC%D0%B0%D1%80%D1%82/02.03(3).pdf"
     # filename="zam-02"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
