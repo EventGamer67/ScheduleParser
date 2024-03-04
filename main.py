@@ -65,16 +65,16 @@ if __name__ == '__main__':
     #parseParas('rasp29', date=datetime.date(2024, 2, 12), sup=sup, data=data)
     #parseParas('29.01', date=datetime.date(2024, 2, 26), sup=sup, data=data)
 
-    #link = getLastZamenaLink(soup=soup)
-    #print(link)
-    # link = "https://www.uksivt.ru//storage/files/all/ZAMENY/%D0%BC%D0%B0%D1%80%D1%82/02.03(3).pdf"
-    # filename="zam-02"
+    # link = getLastZamenaLink(soup=soup)
+    # print(link)
+    # filename="zam-04"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    # date = datetime.date(2024, 3, 2)
-    # parseZamenas("zam-02.docx", date, sup=sup, data=data)
+    # date = datetime.date(2024, 3, 4)
+    # parseZamenas("zam-04.docx", date, sup=sup, data=data)
+    # addNewZamenaFileLink(link,date=date,sup=sup)
     pass
 
 # def extract_tables_from_docx(docx_path):

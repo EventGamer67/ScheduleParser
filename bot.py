@@ -19,13 +19,13 @@ from bs4 import BeautifulSoup
 from downloader import getLastZamenaLink, SCHEDULE_URL, getAllMonthTables, getAllTablesLinks
 from supbase import initSupabase, getCabinets, GetZamenaFileLinks
 
-TOKEN = "5261332325:AAFNow9E-uVnMwsAHvkGbaUdlT0i1wCMRCA"
+TOKEN = "5261332325:AAEVl8ACJvWB4Pajhm3HHKkklPjCjoVQr_o"
 sup = initSupabase()
 dp = Dispatcher()
 router = Router()
 admins = [1283168392]
-r = redis.Redis(host='viaduct.proxy.rlwy.net', port=55121, decode_responses=True,
-                    password="1jlO4idEkKK3MKJfL4eIoPmja6ak1FGN", username="default")
+r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=True,
+                    password="BNFODHMBEaF3fdNd4akOD2CPg5HgEMla", username="default")
 
 
 async def checkNew(bot: Bot):

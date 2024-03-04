@@ -10,7 +10,7 @@ from models import Group, Course, Cabinet, Teacher
 
 def initSupabase():
     supabase: Client = create_client("https://ojbsikxdqcbuvamygezd.supabase.co",
-                                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDkzMTM1NjAsImV4cCI6MjAyNDg4OTU2MH0.fJal6chSBGz2-BYG6S2nZQW23Xyd8mWzODIgeMLWqfE")
+                                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw")
     return supabase
 
 
