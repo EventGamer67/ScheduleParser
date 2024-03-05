@@ -51,6 +51,8 @@ async def checkNew(bot: Bot):
         subs = await r.lrange("subs", 0, -1)
         for i in subs:
             await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
+        await bot.send_message(chat_id=-1002035415883, text=f"Новые замены \n {text}", parse_mode="HTML")
+
 
 
 @dp.message(F.text, Command("update"))
@@ -138,6 +140,7 @@ async def main() -> None:
     scheduler.add_job(checkNew, "interval", hours=1, args=(bot,))
     scheduler.start()
     await dp.start_polling(bot)
+
 
 
 if __name__ == "__main__":
