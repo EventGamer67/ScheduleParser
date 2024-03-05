@@ -1,13 +1,12 @@
 import urllib
 import requests
 from pdf2docx import Converter
-
-import supbase
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import datetime
+
+import supbase
 from models import Group, Course, Teacher, Cabinet
-from supbase import addGroup, addCourse, addTeacher, addCabinet, getParaNameAndTeacher, addFullZamenaGroup
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 #SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
@@ -105,6 +104,13 @@ def parseZamenas(filename: str, date, sup, data):
 
     editet = []
     for i in workRows:
+        text = i[1]
+        if text[-1] == ',':
+            text = text[0:-1]
+            i[1] = text
+        if text[0] == ',':
+            text = text[0:len(text)-1]
+            i[1] = text
         paras = i[1].split(',')
         row = i.copy()
         if (len(paras) >= 2):
@@ -114,7 +120,6 @@ def parseZamenas(filename: str, date, sup, data):
                 editet.append(new)
         else:
             editet.append(i)
-
     workRows = editet
 
     for row in workRows:
@@ -142,7 +147,8 @@ def parseZamenas(filename: str, date, sup, data):
         pass
 
     for i in fullzamenagroups:
-        addFullZamenaGroup(sup=sup, group=get_group_by_id(target_name=i,data=data,groups=data.GROUPS,sup=sup).id,date=date)
+        supbase.addFullZamenaGroup(sup=sup, group=get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, date=date)
+        pass
     pass
 
 
@@ -183,7 +189,7 @@ def ParasGroupToSoup(group, paras, startday, sup,data):
 
         loopindex = 0
         for day in days:
-            aww = getParaNameAndTeacher(day)
+            aww = supbase.getParaNameAndTeacher(day)
             if aww is not None:
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup,data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup,data=data)
@@ -273,7 +279,7 @@ def get_cabinet_by_id(cabinets, target_name, sup,data) -> Cabinet:
         else:
             continue
     try:
-        addCabinet(target_name, sup=sup,data=data)
+        supbase.addCabinet(target_name, sup=sup, data=data)
         return get_cabinet_by_id(cabinets=data.CABINETS, target_name=target_name, sup=sup,data=data)
     except:
         return None
@@ -299,7 +305,7 @@ def get_teacher_by_id(teachers, target_name, sup,data) -> Teacher:
             if search is not None:
                 return search
     try:
-        addTeacher(target_name, sup=sup,data=data)
+        supbase.addTeacher(target_name, sup=sup, data=data)
         return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup,data=data)
     except:
         return None
@@ -313,7 +319,7 @@ def get_group_by_id(groups, target_name, sup,data) -> Group:
         else:
             continue
     try:
-        addGroup(target_name, sup=sup,data=data)
+        supbase.addGroup(target_name, sup=sup, data=data)
         return get_group_by_id(groups=data.GROUPS, target_name=target_name, sup=sup,data=data)
     except:
         return None
@@ -327,7 +333,7 @@ def get_course_by_id(courses, target_name, sup,data) -> Course:
         else:
             continue
     try:
-        addCourse(target_name, sup=sup,data=data)
+        supbase.addCourse(target_name, sup=sup, data=data)
         return get_course_by_id(data.COURSES, target_name=target_name, sup=sup,data=data)
     except:
         return None

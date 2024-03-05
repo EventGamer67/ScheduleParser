@@ -1,21 +1,13 @@
 import supabase
 from aiogram.fsm.storage import redis
 from bs4 import BeautifulSoup
+
+from dataModel import Data
 from downloader import *
 from pdf2docx import Converter, Page
 from pdf2docx import *
-
-from parserV2 import parserv2
 from supbase import *
 import datetime
-
-
-class Data:
-    GROUPS = []
-    CABINETS = []
-    TEACHERS = []
-    COURSES = []
-
 
 if __name__ == '__main__':
     html = urlopen(SCHEDULE_URL).read()
@@ -67,15 +59,18 @@ if __name__ == '__main__':
 
     # link = getLastZamenaLink(soup=soup)
     # print(link)
-    # filename="zam-04"
+    # filename="zam-06"
     # downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    # date = datetime.date(2024, 3, 4)
-    # parseZamenas("zam-04.docx", date, sup=sup, data=data)
+    # date = datetime.date(2024, 3, 6)
+    # parseZamenas("zam-06.docx", date, sup=sup, data=data)
     # addNewZamenaFileLink(link,date=date,sup=sup)
     pass
+
+
+
 
 # def extract_tables_from_docx(docx_path):
 #     doc = docx.Document(docx_path)

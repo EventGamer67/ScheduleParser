@@ -1,10 +1,15 @@
 import json
+import os
 import random
 from datetime import datetime
 from typing import List
 
+import requests
 import supabase
+from pdf2docx import Converter
 from supabase import create_client, Client
+
+from dataModel import Data
 from models import Group, Course, Cabinet, Teacher
 
 
@@ -116,3 +121,28 @@ def addZamena(sup,group,number,course,teacher,cabinet,date):
 def addFullZamenaGroup(sup,group,date):
     response = sup.table("ZamenasFull").insert({"group": group,'date':str(date)}).execute()
     print(response)
+
+
+def parse(link, date, sup):
+    data = Data
+    data.GROUPS = getGroups(sup=sup)
+    data.CABINETS = getCabinets(sup=sup)
+    data.TEACHERS = getTeachers(sup=sup)
+    data.COURSES = getCourses(sup=sup)
+    filename = f"zam-{date}"
+    response = requests.get(link)
+    if response.status_code == 200:
+        with open(f"{filename}.pdf", 'wb') as file:
+            file.write(response.content)
+            file.flush()
+    else:
+        raise Exception("Файл не загружен")
+
+    cv = Converter(f'{filename}.pdf')
+    cv.convert(f'{filename}.docx', start=0, end=None)
+    cv.close()
+    from downloader import parseZamenas
+    parseZamenas(f"{filename}.docx", date, sup=sup, data=data)
+    addNewZamenaFileLink(link, date=date, sup=sup)
+    os.remove(f"{filename}.pdf")
+    os.remove(f"{filename}.docx")
