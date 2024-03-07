@@ -19,9 +19,9 @@ from docx.table import Table
 
 
 def parseParas(filename: str, date, sup,data):
-    # cv = Converter(f'{filename}.pdf')
-    # cv.convert('schedule' + '.docx', start=0, end=None)
-    # cv.close()
+    cv = Converter(f'{filename}.pdf')
+    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -80,7 +80,7 @@ def parseZamenas(filename: str, date, sup, data):
     workRows = remove_headers(workRows)
 
     fullzamenagroups = []
-
+    liquidation = []
     iteration = 0
     for i in workRows:
         iteration = iteration + 1
@@ -88,38 +88,56 @@ def parseZamenas(filename: str, date, sup, data):
             i[0] = workRows[iteration - 2][0]
 
     for i in workRows:
-        if(i.count(i[0]) == len(i)):
-            fullzamenagroups.append(i[0].strip().replace(' ',""))
-
-    cleaned = []
-    for i in workRows:
-        i.pop(2)
-
-    for i in workRows:
-        i.pop(2)
-
-    for i in workRows:
         if (i[0] == i[1] and i[2] == i[3]):
+            if(i[0].strip().lower().__contains__("ликвидация")):
+                try:
+                    group = get_group_by_id(groups=data.GROUPS, target_name=i[0].split(' ')[0], sup=sup,data=data)
+                    liquidation.append(group.id)
+                except Exception as err:
+                    print(err)
+                    continue
+                workRows.remove(i)
+
+
+    for i in workRows:
+        i.pop(2)
+
+    for i in workRows:
+        i.pop(2)
+
+    for i in workRows:
+        if( i[1] == '' and i[2] =='' and i[3] =='' and i[4] == '' ):
             workRows.remove(i)
+
+    for i in workRows:
+        if i[0] == i[1] and i[1] == i[2] and i[2] == i[3] and i[3] == i[4]:
+            fullzamenagroups.append(i[0].strip().replace(' ',""))
+            workRows.remove(i)
+
 
     editet = []
     for i in workRows:
-        text = i[1]
-        if text[-1] == ',':
-            text = text[0:-1]
-            i[1] = text
-        if text[0] == ',':
-            text = text[0:len(text)-1]
-            i[1] = text
-        paras = i[1].split(',')
-        row = i.copy()
-        if (len(paras) >= 2):
-            for para in paras:
-                new = row.copy()
-                new[1] = para
-                editet.append(new)
-        else:
-            editet.append(i)
+        try:
+            text = i[1]
+            if text[-1] == ',':
+                text = text[0:-1]
+                i[1] = text
+            if text[0] == ',':
+                text = text[0:len(text) - 1]
+                i[1] = text
+            paras = i[1].split(',')
+            row = i.copy()
+            if (len(paras) >= 2):
+                for para in paras:
+                    new = row.copy()
+                    new[1] = para
+                    editet.append(new)
+            else:
+                editet.append(i)
+        except Exception as error:
+            print(error)
+            print(i)
+            continue
     workRows = editet
 
     for row in workRows:
@@ -149,6 +167,9 @@ def parseZamenas(filename: str, date, sup, data):
     for i in fullzamenagroups:
         supbase.addFullZamenaGroup(sup=sup, group=get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, date=date)
         pass
+
+    for i in liquidation:
+        supbase.addLiquidation(sup=sup,group=i,date=date)
     pass
 
 

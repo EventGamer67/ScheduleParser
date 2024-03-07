@@ -123,6 +123,16 @@ def addFullZamenaGroup(sup,group,date):
     print(response)
 
 
+def addHoliday(sup,date,name):
+    response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
+    print(response)
+
+
+def addLiquidation(sup,group,date):
+    response = sup.table("Liquidation").insert({"group": group,'date':str(date)}).execute()
+    print(response)
+
+
 def parse(link, date, sup):
     data = Data
     data.GROUPS = getGroups(sup=sup)

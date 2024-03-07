@@ -110,6 +110,18 @@ async def my_handlers(message: Message):
         await message.answer(f"Ошибка отписки\n{error}")
 
 
+@dp.message(F.text, Command("holiday"))
+async def my_handlers(message: Message):
+    try:
+        date = message.text.split(' ')[1]
+        name = message.text.split(' ')[2]
+        date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+        response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
+        await  message.answer(f'holiday set {response}')
+    except Exception as err:
+        await message.answer(str(err))
+
+
 @dp.message(F.text, Command("remove"))
 async def my_handlers(message: Message):
     try:
