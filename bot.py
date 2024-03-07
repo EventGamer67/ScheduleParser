@@ -50,8 +50,17 @@ async def checkNew(bot: Bot):
             text += (f' \n {link}')
         subs = await r.lrange("subs", 0, -1)
         for i in subs:
-            await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
-        await bot.send_message(chat_id=-1002035415883, text=f"Новые замены \n {text}", parse_mode="HTML")
+            try:
+                await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
+            except Exception as error:
+                try:
+                    await bot.send_message(chat_id=admins[0],text=str(error))
+                except:
+                    continue
+        try:
+            await bot.send_message(chat_id=-1002035415883, text=f"Новые замены \n {text}", parse_mode="HTML")
+        except Exception as error:
+            await bot.send_message(chat_id=admins[0], text=str(error))
 
 
 
