@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 from typing import List
 from urllib.request import urlopen
@@ -18,7 +19,7 @@ from aiogram.types import Message
 from aiogram.utils.markdown import hbold
 from bs4 import BeautifulSoup
 from downloader import getLastZamenaLink, SCHEDULE_URL, getAllMonthTables, getAllTablesLinks, create_pdf_screenshots, \
-    cleanup_temp_files
+    cleanup_temp_files, downloadFile
 from supbase import initSupabase, getCabinets, GetZamenaFileLinks, parse
 from aiogram.types import FSInputFile
 
@@ -33,6 +34,7 @@ r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=Tru
 
 @dp.message(F.text, Command("test"))
 async def my_asdtest(messsage: Message):
+
     pdf_path = 'zam-11'
     screenshot_paths = await create_pdf_screenshots(pdf_path)
     media_group = MediaGroupBuilder(caption="Новые замены")
@@ -58,26 +60,36 @@ async def checkNew(bot: Bot):
         text = ""
         alreadyFound = await r.lrange("alreadyFound", 0, -1)
         new = list(set(siteLinks) - set(databaseLinks) - set(alreadyFound))
+        files = []
         if (len(new) < 1):
             return
         for link in new:
-            await r.lpush("alreadyFound", str(link))
-            # text += (f' \n <a href="{link}">Неизвестная дата</a>')
-            text += (f' \n {link}')
-        subs = await r.lrange("subs", 0, -1)
-        for i in subs:
             try:
-                await bot.send_message(chat_id=i, text=f"Новые замены \n {text}", parse_mode="HTML")
-            except Exception as error:
+                await r.lpush("alreadyFound", str(link))
+                filename = link.split('/')[-1].split('.')[0]
+                downloadFile(link=link, filename=f"{filename}.pdf")
+                screenshot_paths = await create_pdf_screenshots(filename)
+                media_group = MediaGroupBuilder(caption=f"Новые замены \n {link}")
+                for i in screenshot_paths:
+                    image = FSInputFile(i)
+                    media_group.add_photo(image)
                 try:
-                    await bot.send_message(chat_id=admins[0],text=str(error))
-                except:
-                    continue
-        try:
-            await bot.send_message(chat_id=-1002035415883, text=f"Новые замены \n {text}", parse_mode="HTML")
-        except Exception as error:
-            await bot.send_message(chat_id=admins[0], text=str(error))
-
+                    await bot.send_media_group(-1002035415883, media=media_group.build())
+                except Exception as error:
+                    await bot.send_message(chat_id=admins[0], text=str(error))
+                subs = await r.lrange("subs", 0, -1)
+                for i in subs:
+                    try:
+                        await bot.send_media_group(i, media=media_group.build())
+                    except Exception as error:
+                        try:
+                            await bot.send_message(chat_id=admins[0], text=str(error))
+                        except:
+                            continue
+                cleanup_temp_files(screenshot_paths)
+                os.remove(f"{filename}.pdf")
+            except Exception as error:
+                await bot.send_message(chat_id=admins[0], text=str(error))
 
 
 @dp.message(F.text, Command("update"))
