@@ -7,6 +7,7 @@ import time
 import datetime
 from aiogram.client import bot
 from aiogram.fsm.storage import redis
+from aiogram.utils.media_group import MediaGroupBuilder
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -16,8 +17,10 @@ from aiogram.filters import CommandStart, Filter, Command
 from aiogram.types import Message
 from aiogram.utils.markdown import hbold
 from bs4 import BeautifulSoup
-from downloader import getLastZamenaLink, SCHEDULE_URL, getAllMonthTables, getAllTablesLinks
+from downloader import getLastZamenaLink, SCHEDULE_URL, getAllMonthTables, getAllTablesLinks, create_pdf_screenshots, \
+    cleanup_temp_files
 from supbase import initSupabase, getCabinets, GetZamenaFileLinks, parse
+from aiogram.types import FSInputFile
 
 TOKEN = "5261332325:AAEVl8ACJvWB4Pajhm3HHKkklPjCjoVQr_o"
 sup = initSupabase()
@@ -26,6 +29,19 @@ router = Router()
 admins = [1283168392]
 r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=True,
                     password="BNFODHMBEaF3fdNd4akOD2CPg5HgEMla", username="default")
+
+
+@dp.message(F.text, Command("test"))
+async def my_asdtest(messsage: Message):
+    pdf_path = 'zam-11'
+    screenshot_paths = await create_pdf_screenshots(pdf_path)
+    media_group = MediaGroupBuilder(caption="Новые замены")
+    for i in screenshot_paths:
+        print(i)
+        image = FSInputFile(i)
+        media_group.add_photo(image)
+    await messsage.bot.send_media_group(1283168392, media=media_group.build())
+    cleanup_temp_files(screenshot_paths)
 
 
 async def checkNew(bot: Bot):
@@ -158,7 +174,8 @@ async def my_handler(message: Message):
 async def main() -> None:
     bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(checkNew, "interval", hours=1, args=(bot,))
+    trigger = CronTrigger(hour='8-20', day_of_week='mon-fri')
+    scheduler.add_job(checkNew, trigger, args=(bot,))
     scheduler.start()
     await dp.start_polling(bot)
 

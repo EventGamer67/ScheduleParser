@@ -7,3 +7,4 @@ requests
 aiogram
 apscheduler
 redis
+fitz

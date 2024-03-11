@@ -1,10 +1,12 @@
+import asyncio
+import os
 import urllib
+import fitz
 import requests
 from pdf2docx import Converter
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import datetime
-
 import supbase
 from models import Group, Course, Teacher, Cabinet
 
@@ -16,6 +18,31 @@ from typing import List
 from docx import Document
 from docx.document import Document as DocumentType
 from docx.table import Table
+
+async def save_pixmap(pixmap, screenshot_path):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, pixmap.save, screenshot_path, "png")
+
+def cleanup_temp_files(file_paths):
+    for file_path in file_paths:
+        os.remove(file_path)
+
+
+# Функция для создания скриншотов каждой страницы PDF
+async def create_pdf_screenshots(pdf_path):
+    screenshot_paths = []
+    pdf_document : fitz.Document = fitz.open(f"{pdf_path}.pdf")
+    for i in range(pdf_document.page_count):
+        page : fitz.Page = pdf_document.load_page(i)
+        zoom_x = 1.5  # horizontal zoom
+        zoom_y = 1.5  # vertical zoom
+        mat = fitz.Matrix(zoom_x, zoom_y)
+        pix : fitz.Pixmap = page.get_pixmap(matrix=mat)
+        screenshot_path = f'{pdf_path}_page_{i+1}.png'
+        await save_pixmap(pix, screenshot_path)
+        screenshot_paths.append(screenshot_path)
+    return screenshot_paths
+
 
 
 def parseParas(filename: str, date, sup,data):
@@ -75,6 +102,15 @@ def parseZamenas(filename: str, date, sup, data):
             workRows.extend(i)
         else:
             workRows.append(i)
+
+
+    #test cleaning before ликвидация замен
+    for i in workRows:
+        if i[2] == '' and i[3] != '':
+            print(f"CLEANED {i[3]} in row {i}")
+            i[3] = ''
+
+
     workRows = clearNonDataRows(workRows)
     workRows = clear_empty_sublists(workRows)
     workRows = remove_headers(workRows)
@@ -82,12 +118,16 @@ def parseZamenas(filename: str, date, sup, data):
     fullzamenagroups = []
     liquidation = []
     iteration = 0
+
+
+
     for i in workRows:
         iteration = iteration + 1
         if (i[0] == ''):
             i[0] = workRows[iteration - 2][0]
 
-    for i in workRows:
+
+    for i in workRows[:]:
         if (i[0] == i[1] and i[2] == i[3]):
             if(i[0].strip().lower().__contains__("ликвидация")):
                 try:
@@ -98,18 +138,17 @@ def parseZamenas(filename: str, date, sup, data):
                     continue
                 workRows.remove(i)
 
-
-    for i in workRows:
+    for i in workRows[:]:
         i.pop(2)
 
-    for i in workRows:
+    for i in workRows[:]:
         i.pop(2)
 
-    for i in workRows:
+    for i in workRows[:]:
         if( i[1] == '' and i[2] =='' and i[3] =='' and i[4] == '' ):
             workRows.remove(i)
 
-    for i in workRows:
+    for i in workRows[:]:
         if i[0] == i[1] and i[1] == i[2] and i[2] == i[3] and i[3] == i[4]:
             fullzamenagroups.append(i[0].strip().replace(' ',""))
             workRows.remove(i)
@@ -170,6 +209,7 @@ def parseZamenas(filename: str, date, sup, data):
 
     for i in liquidation:
         supbase.addLiquidation(sup=sup,group=i,date=date)
+        pass
     pass
 
 
@@ -194,9 +234,6 @@ def removeDuplicates(table):
 
 
 def ParasGroupToSoup(group, paras, startday, sup,data):
-    print()
-    print(group)
-    print()
     date = startday
     for para in paras:
         number = para[0]
@@ -471,7 +508,6 @@ def getMonthTable(soup: BeautifulSoup, monthIndex: int):
 
 def getAllMonthTables(soup: BeautifulSoup):
     newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
-    print(newtables)
     oldtables = soup.find_all('table', {'class': 'calendar-month'})
     newtables.extend(oldtables)
     return newtables
