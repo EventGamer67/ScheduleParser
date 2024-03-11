@@ -7,4 +7,5 @@ requests
 aiogram
 apscheduler
 redis
+PyMuPDF
 fitz
