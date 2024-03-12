@@ -94,9 +94,10 @@ async def checkNew(bot: Bot):
 
 @dp.message(F.text, Command("update"))
 async def my_update(messsage: Message):
-    await checkNew(bot=messsage.bot)
-    await messsage.reply("Проверил")
-
+    if messsage.chat.id in admins:
+        await  messsage.reply("Проверяю")
+        await checkNew(bot=messsage.bot)
+        await messsage.reply("Проверил")
 
 # @dp.message(F.text, Command("check"))
 # async def my_handler(message: Message):
