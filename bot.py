@@ -32,18 +32,18 @@ r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=Tru
                     password="BNFODHMBEaF3fdNd4akOD2CPg5HgEMla", username="default")
 
 
-@dp.message(F.text, Command("test"))
-async def my_asdtest(messsage: Message):
-
-    pdf_path = 'zam-11'
-    screenshot_paths = await create_pdf_screenshots(pdf_path)
-    media_group = MediaGroupBuilder(caption="Новые замены")
-    for i in screenshot_paths:
-        print(i)
-        image = FSInputFile(i)
-        media_group.add_photo(image)
-    await messsage.bot.send_media_group(1283168392, media=media_group.build())
-    cleanup_temp_files(screenshot_paths)
+# @dp.message(F.text, Command("test"))
+# async def my_asdtest(messsage: Message):
+#     if messsage.chat.id in admins:
+#         pdf_path = 'zam-11'
+#         screenshot_paths = await create_pdf_screenshots(pdf_path)
+#         media_group = MediaGroupBuilder(caption="Новые замены")
+#         for i in screenshot_paths:
+#             print(i)
+#             image = FSInputFile(i)
+#             media_group.add_photo(image)
+#         await messsage.bot.send_media_group(1283168392, media=media_group.build())
+#         cleanup_temp_files(screenshot_paths)
 
 
 async def checkNew(bot: Bot):
@@ -141,47 +141,51 @@ async def my_handlers(message: Message):
 
 @dp.message(F.text, Command("holiday"))
 async def my_handlers(message: Message):
-    try:
-        date = message.text.split(' ')[1]
-        name = message.text.split(' ')[2]
-        date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
-        response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
-        await  message.answer(f'holiday set {response}')
-    except Exception as err:
-        await message.answer(str(err))
+    if message.chat.id in admins:
+        try:
+            date = message.text.split(' ')[1]
+            name = message.text.split(' ')[2]
+            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
+            await  message.answer(f'holiday set {response}')
+        except Exception as err:
+            await message.answer(str(err))
 
 
 @dp.message(F.text, Command("remove"))
 async def my_handlers(message: Message):
-    try:
-        date = message.text.split(' ')[1]
-        date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
-        deleted = []
-        deleted.append(sup.table('Zamenas').delete().eq('date', date).execute())
-        deleted.append(sup.table('ZamenasFull').delete().eq('date', date).execute())
-        deleted.append(sup.table('ZamenaFileLinks').delete().eq('date', date).execute())
-        await  message.answer(f'deleted {deleted[0:10]}')
-    except Exception as err:
-        await message.answer(str(err))
+    if message.chat.id in admins:
+        try:
+            date = message.text.split(' ')[1]
+            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            deleted = []
+            deleted.append(sup.table('Zamenas').delete().eq('date', date).execute())
+            deleted.append(sup.table('ZamenasFull').delete().eq('date', date).execute())
+            deleted.append(sup.table('ZamenaFileLinks').delete().eq('date', date).execute())
+            await  message.answer(f'deleted {deleted[0:10]}')
+        except Exception as err:
+            await message.answer(str(err))
 
 
 @dp.message(F.text, Command("parse"))
 async def my_handlers(message: Message):
-    try:
-        date = message.text.split(' ')[1]
-        date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
-        link = message.text.split(' ')[2]
-        parse(link=link,date=date,sup=sup)
-        await  message.answer(f'parsed')
-    except Exception as err:
-        await message.answer(str(err))
+    if message.chat.id in admins:
+        try:
+            date = message.text.split(' ')[1]
+            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            link = message.text.split(' ')[2]
+            parse(link=link,date=date,sup=sup)
+            await  message.answer(f'parsed')
+        except Exception as err:
+            await message.answer(str(err))
 
 
 @dp.message(F.text, Command("latest"))
 async def my_handler(message: Message):
-    html = urlopen(SCHEDULE_URL).read()
-    soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-    await message.answer(getLastZamenaLink(soup=soup))
+    if message.chat.id in admins:
+        html = urlopen(SCHEDULE_URL).read()
+        soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
+        await message.answer(getLastZamenaLink(soup=soup))
 
 
 async def main() -> None:
