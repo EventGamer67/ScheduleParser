@@ -28,7 +28,6 @@ def cleanup_temp_files(file_paths):
         os.remove(file_path)
 
 
-# Функция для создания скриншотов каждой страницы PDF
 async def create_pdf_screenshots(pdf_path):
     screenshot_paths = []
     pdf_document : fitz.Document = fitz.open(f"{pdf_path}.pdf")
