@@ -11,7 +11,7 @@ import supbase
 from models import Group, Course, Teacher, Cabinet
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
-#SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
+# SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
 
 BASEURL = 'https://www.uksivt.ru/'
 from typing import List
@@ -19,9 +19,11 @@ from docx import Document
 from docx.document import Document as DocumentType
 from docx.table import Table
 
+
 async def save_pixmap(pixmap, screenshot_path):
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, pixmap.save, screenshot_path, "png")
+
 
 def cleanup_temp_files(file_paths):
     for file_path in file_paths:
@@ -30,21 +32,20 @@ def cleanup_temp_files(file_paths):
 
 async def create_pdf_screenshots(pdf_path):
     screenshot_paths = []
-    pdf_document : fitz.Document = fitz.open(f"{pdf_path}.pdf")
+    pdf_document: fitz.Document = fitz.open(f"{pdf_path}.pdf")
     for i in range(pdf_document.page_count):
-        page : fitz.Page = pdf_document.load_page(i)
+        page: fitz.Page = pdf_document.load_page(i)
         zoom_x = 1.5  # horizontal zoom
         zoom_y = 1.5  # vertical zoom
         mat = fitz.Matrix(zoom_x, zoom_y)
-        pix : fitz.Pixmap = page.get_pixmap(matrix=mat)
-        screenshot_path = f'{pdf_path}_page_{i+1}.png'
+        pix: fitz.Pixmap = page.get_pixmap(matrix=mat)
+        screenshot_path = f'{pdf_path}_page_{i + 1}.png'
         await save_pixmap(pix, screenshot_path)
         screenshot_paths.append(screenshot_path)
     return screenshot_paths
 
 
-
-def parseParas(filename: str, date, sup,data):
+def parseParas(filename: str, date, sup, data):
     cv = Converter(f'{filename}.pdf')
     cv.convert('schedule' + '.docx', start=0, end=None)
     cv.close()
@@ -57,7 +58,7 @@ def parseParas(filename: str, date, sup,data):
             groups.append(filter[-1])
 
     for i in groups:
-        if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS,data=data):
+        if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS, data=data):
             pass
 
     tables = []
@@ -89,7 +90,8 @@ def parseParas(filename: str, date, sup,data):
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
-        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup,data=data), paras=divided[gruppa],sup=sup, startday=date,data=data)
+        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),
+                         paras=divided[gruppa], sup=sup, startday=date, data=data)
     pass
 
 
@@ -102,36 +104,38 @@ def parseZamenas(filename: str, date, sup, data):
         else:
             workRows.append(i)
 
-
-    #test cleaning before ликвидация замен
+    # test cleaning before ликвидация замен
     for i in workRows:
         if i[2] == '' and i[3] != '':
-            print(f"CLEANED {i[3]} in row {i}")
             i[3] = ''
+        if i[1] == '' and i[2] == '' and i[3] == '' and i[5] == '':
+            i[4] = ''
+            pass
 
 
     workRows = clearNonDataRows(workRows)
     workRows = clear_empty_sublists(workRows)
     workRows = remove_headers(workRows)
 
+
     fullzamenagroups = []
     liquidation = []
     iteration = 0
 
-
-
     for i in workRows:
         iteration = iteration + 1
-        if (i[0] == ''):
+        if i[0] == '':
             i[0] = workRows[iteration - 2][0]
 
-
     for i in workRows[:]:
-        if (i[0] == i[1] and i[2] == i[3]):
-            if(i[0].strip().lower().__contains__("ликвидация")):
+        if i[0] == i[1] and i[2] == i[3]:
+            if (i[0].strip().lower().__contains__("ликвидация")):
                 try:
-                    group = get_group_by_id(groups=data.GROUPS, target_name=i[0].split(' ')[0], sup=sup,data=data)
-                    liquidation.append(group.id)
+                    sample = i[0].strip().lower()
+                    for gr in data.GROUPS:
+                        if (sample.__contains__(gr.name.lower().strip())):
+                            liquidation.append(gr.id)
+                            print(f"Ликвидация {gr.name}")
                 except Exception as err:
                     print(err)
                     continue
@@ -144,14 +148,13 @@ def parseZamenas(filename: str, date, sup, data):
         i.pop(2)
 
     for i in workRows[:]:
-        if( i[1] == '' and i[2] =='' and i[3] =='' and i[4] == '' ):
+        if (i[1] == '' and i[2] == '' and i[3] == '' and i[4] == ''):
             workRows.remove(i)
 
     for i in workRows[:]:
         if i[0] == i[1] and i[1] == i[2] and i[2] == i[3] and i[3] == i[4]:
-            fullzamenagroups.append(i[0].strip().replace(' ',""))
+            fullzamenagroups.append(i[0].strip().replace(' ', ""))
             workRows.remove(i)
-
 
     editet = []
     for i in workRows:
@@ -179,22 +182,25 @@ def parseZamenas(filename: str, date, sup, data):
     workRows = editet
 
     for row in workRows:
-        group = get_group_by_id(data.GROUPS, row[0], sup=sup,data=data)
+        print(row)
+
+    for row in workRows:
+        group = get_group_by_id(data.GROUPS, row[0], sup=sup, data=data)
         if group is not None:
             row[0] = group.id
 
     for row in workRows:
-        course = get_course_by_id(data.COURSES, row[2], sup=sup,data=data)
+        course = get_course_by_id(data.COURSES, row[2], sup=sup, data=data)
         if course is not None:
             row[2] = course.id
 
     for row in workRows:
-        teacher = get_teacher_by_id(data.TEACHERS, row[3], sup=sup,data=data)
+        teacher = get_teacher_by_id(data.TEACHERS, row[3], sup=sup, data=data)
         if teacher is not None:
             row[3] = teacher.id
 
     for row in workRows:
-        cabinet = get_cabinet_by_id(data.CABINETS, row[4], sup=sup,data=data)
+        cabinet = get_cabinet_by_id(data.CABINETS, row[4], sup=sup, data=data)
         if cabinet is not None:
             row[4] = cabinet.id
 
@@ -232,7 +238,7 @@ def removeDuplicates(table):
     return cleared
 
 
-def ParasGroupToSoup(group, paras, startday, sup,data):
+def ParasGroupToSoup(group, paras, startday, sup, data):
     date = startday
     for para in paras:
         number = para[0]
@@ -248,11 +254,13 @@ def ParasGroupToSoup(group, paras, startday, sup,data):
         for day in days:
             aww = supbase.getParaNameAndTeacher(day)
             if aww is not None:
-                teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup,data=data)
-                course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup,data=data)
-                cabinet = get_cabinet_by_id(target_name=para[2*(loopindex+1)], cabinets=data.CABINETS, sup=sup,data=data)
+                teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
+                course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
+                cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
+                                            data=data)
                 if (teacher is not None and course is not None and cabinet is not None):
-                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
+                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,
+                                    course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
                     pass
             loopindex = loopindex + 1
             pass
@@ -329,7 +337,7 @@ def clearDiscipline(table):
     return table
 
 
-def get_cabinet_by_id(cabinets, target_name, sup,data) -> Cabinet:
+def get_cabinet_by_id(cabinets, target_name, sup, data) -> Cabinet:
     for cabinet in cabinets:
         if cabinet.name == target_name:
             return cabinet
@@ -337,23 +345,40 @@ def get_cabinet_by_id(cabinets, target_name, sup,data) -> Cabinet:
             continue
     try:
         supbase.addCabinet(target_name, sup=sup, data=data)
-        return get_cabinet_by_id(cabinets=data.CABINETS, target_name=target_name, sup=sup,data=data)
+        return get_cabinet_by_id(cabinets=data.CABINETS, target_name=target_name, sup=sup, data=data)
     except:
         return None
     return None
+
+
+def count_different_characters(str1, str2):
+    if len(str1) != len(str2):
+        return -1
+
+    count = 0
+    for char1, char2 in zip(str1, str2):
+        if char1 != char2:
+            count += 1
+    return count
 
 
 def get_teacher_from_short_name(teachers: List[Teacher], shortName: str):
     for i in teachers:
         fio: List[str] = i.name.split(' ')
         if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
-            compare_result = f"{fio[0]} {fio[1][0]}.{fio[2][0]}."
-            if compare_result.lower().strip() == shortName.lower().strip():
+            compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
+            shortcomparer = shortName.replace('.','').replace(',','').replace(' ','').lower().strip()
+            if compare_result == shortcomparer:
                 return i
+            else:
+                if count_different_characters(compare_result, shortcomparer) == 1:
+                    print(f"taker {compare_result} and {shortcomparer}")
+                    print(f"set {i}")
+                    return i
     return None
 
 
-def get_teacher_by_id(teachers, target_name, sup,data) -> Teacher:
+def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
     for teacher in teachers:
         if teacher.name == target_name:
             return teacher
@@ -362,14 +387,14 @@ def get_teacher_by_id(teachers, target_name, sup,data) -> Teacher:
             if search is not None:
                 return search
     try:
-        supbase.addTeacher(target_name, sup=sup, data=data)
-        return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup,data=data)
+        #supbase.addTeacher(target_name, sup=sup, data=data)
+        print(f"want add teacher {target_name}")
+        return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
     except:
         return None
-    return None
 
 
-def get_group_by_id(groups, target_name, sup,data) -> Group:
+def get_group_by_id(groups, target_name, sup, data) -> Group:
     for group in groups:
         if group.name == target_name:
             return group
@@ -377,13 +402,13 @@ def get_group_by_id(groups, target_name, sup,data) -> Group:
             continue
     try:
         supbase.addGroup(target_name, sup=sup, data=data)
-        return get_group_by_id(groups=data.GROUPS, target_name=target_name, sup=sup,data=data)
+        return get_group_by_id(groups=data.GROUPS, target_name=target_name, sup=sup, data=data)
     except:
         return None
     return None
 
 
-def get_course_by_id(courses, target_name, sup,data) -> Course:
+def get_course_by_id(courses, target_name, sup, data) -> Course:
     for course in courses:
         if course.name == target_name:
             return course
@@ -391,7 +416,7 @@ def get_course_by_id(courses, target_name, sup,data) -> Course:
             continue
     try:
         supbase.addCourse(target_name, sup=sup, data=data)
-        return get_course_by_id(data.COURSES, target_name=target_name, sup=sup,data=data)
+        return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
     except:
         return None
     return None
@@ -520,7 +545,7 @@ def getAllTablesLinks(tables):
             text = tag.get_text()
             if (tag):
                 if text.isdigit():
-                    links.append( urllib.parse.urljoin("https://www.uksivt.ru/zameny/",tag.get('href')))
+                    links.append(urllib.parse.urljoin("https://www.uksivt.ru/zameny/", tag.get('href')))
 
     return links
 
@@ -536,18 +561,19 @@ def getMonthAvalibleDays(soup: BeautifulSoup, monthIndex: int):
     return days
 
 
-def getMonthsList(soup : BeautifulSoup):
+def getMonthsList(soup: BeautifulSoup):
     paragraphs_with_class = soup.find_all("p", class_="MsoNormal")
     list = []
     for par in paragraphs_with_class:
         paragraphText = par.get_text(strip=True)
-        if (paragraphText != '' and paragraphText is not None and not paragraphText.isdigit() and paragraphText not in ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']):
+        if (paragraphText != '' and paragraphText is not None and not paragraphText.isdigit() and paragraphText not in [
+            'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']):
             list.append(par.get_text(strip=True))
     index = 0
     for month in list:
         if len(month.split(' ')) == 1:
-            list[index] = f"{month} {list[index+1].split(' ')[1]}"
-        index = index+1
+            list[index] = f"{month} {list[index + 1].split(' ')[1]}"
+        index = index + 1
     return list
 
 
