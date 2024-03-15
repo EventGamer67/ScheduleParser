@@ -387,7 +387,7 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
             if search is not None:
                 return search
     try:
-        #supbase.addTeacher(target_name, sup=sup, data=data)
+        supbase.addTeacher(target_name, sup=sup, data=data)
         print(f"want add teacher {target_name}")
         return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
     except:

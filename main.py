@@ -59,13 +59,13 @@ if __name__ == '__main__':
 
     link = getLastZamenaLink(soup=soup)
     print(link)
-    filename="zam-14"
-    # downloadFile(link=link, filename=filename+".pdf")
+    filename="zam-16"
+    downloadFile(link=link, filename=filename+".pdf")
     # cv = Converter(f'{filename}.pdf')
     # cv.convert(f'{filename}.docx', start=0, end=None)
     # cv.close()
-    date = datetime.date(2024, 3, 14)
-    parseZamenas("zam-14.docx", date, sup=sup, data=data)
+    date = datetime.date(2024, 3, 16)
+    parseZamenas("zam-16.docx", date, sup=sup, data=data)
     addNewZamenaFileLink(link,date=date,sup=sup)
     pass
 
