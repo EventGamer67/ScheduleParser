@@ -32,20 +32,6 @@ r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=Tru
                     password="BNFODHMBEaF3fdNd4akOD2CPg5HgEMla", username="default")
 
 
-# @dp.message(F.text, Command("test"))
-# async def my_asdtest(messsage: Message):
-#     if messsage.chat.id in admins:
-#         pdf_path = 'zam-11'
-#         screenshot_paths = await create_pdf_screenshots(pdf_path)
-#         media_group = MediaGroupBuilder(caption="Новые замены")
-#         for i in screenshot_paths:
-#             print(i)
-#             image = FSInputFile(i)
-#             media_group.add_photo(image)
-#         await messsage.bot.send_media_group(1283168392, media=media_group.build())
-#         cleanup_temp_files(screenshot_paths)
-
-
 async def checkNew(bot: Bot):
     html = urlopen(SCHEDULE_URL).read()
     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
@@ -98,22 +84,6 @@ async def my_update(messsage: Message):
         await  messsage.reply("Проверяю")
         await checkNew(bot=messsage.bot)
         await messsage.reply("Проверил")
-
-# @dp.message(F.text, Command("check"))
-# async def my_handler(message: Message):
-#     html = urlopen(SCHEDULE_URL).read()
-#     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-#     siteLinks = getAllTablesLinks(getAllMonthTables(soup=soup))
-#     databaseLinks = GetZamenaFileLinks()
-#     if (siteLinks.__eq__(databaseLinks)):
-#         await message.answer("Нет новых")
-#     else:
-#         text = ""
-#         for link in list(set(siteLinks) - set(databaseLinks)):
-#             # text += (f' \n <a href="{link}">Неизвестная дата</a>')
-#             text += (f' \n {link}')
-#
-#         await message.answer(f"Новые замены \n {text}", parse_mode="HTML")
 
 
 @dp.message(F.text, Command("sub"))
