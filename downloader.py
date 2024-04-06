@@ -8,6 +8,7 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import datetime
 import supbase
+from classes import ZamTable
 from models import Group, Course, Teacher, Cabinet
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
@@ -46,9 +47,9 @@ async def create_pdf_screenshots(pdf_path):
 
 
 def parseParas(filename: str, date, sup, data):
-    cv = Converter(f'{filename}.pdf')
-    cv.convert('schedule' + '.docx', start=0, end=None)
-    cv.close()
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert('schedule' + '.docx', start=0, end=None)
+    # cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -96,7 +97,12 @@ def parseParas(filename: str, date, sup, data):
 
 
 def parseZamenas(filename: str, date, sup, data):
-    all_rows = get_all_tables(filename)
+    all_rows, header = get_all_tables(filename)
+
+    practice_groups: List[Group] = []
+    for i in header:
+        practice_groups.extend(supbase.get_groups_from_string(i.text, data=data))
+
     workRows = []
     for i in all_rows:
         if (not is_nested(i)):
@@ -112,11 +118,9 @@ def parseZamenas(filename: str, date, sup, data):
             i[4] = ''
             pass
 
-
     workRows = clearNonDataRows(workRows)
     workRows = clear_empty_sublists(workRows)
     workRows = remove_headers(workRows)
-
 
     fullzamenagroups = []
     liquidation = []
@@ -159,7 +163,7 @@ def parseZamenas(filename: str, date, sup, data):
     editet = []
     for i in workRows:
         try:
-            text = i[1]
+            text = i[1].replace('.',',')
             if text[-1] == ',':
                 text = text[0:-1]
                 i[1] = text
@@ -182,9 +186,6 @@ def parseZamenas(filename: str, date, sup, data):
     workRows = editet
 
     for row in workRows:
-        print(row)
-
-    for row in workRows:
         group = get_group_by_id(data.GROUPS, row[0], sup=sup, data=data)
         if group is not None:
             row[0] = group.id
@@ -204,17 +205,31 @@ def parseZamenas(filename: str, date, sup, data):
         if cabinet is not None:
             row[4] = cabinet.id
 
+    practice_supabase = []
+    for i in practice_groups:
+        practice_supabase.append({"group": i.id, 'date': str(date)})
+        pass
+    supbase.add_practices(sup=sup, practices=practice_supabase)
+
+    zamenas_supabase = []
     for i in workRows:
-        supbase.addZamena(sup=sup, group=i[0], number=i[1], course=i[2], teacher=i[3], cabinet=i[4], date=date)
+        zamenas_supabase.append(
+            {"group": i[0], 'number': int(i[1]), 'course': i[2], 'teacher': i[3], 'cabinet': i[4], 'date': str(date)})
         pass
+    supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
 
+    full_zamenas_groups = []
     for i in fullzamenagroups:
-        supbase.addFullZamenaGroup(sup=sup, group=get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, date=date)
+        full_zamenas_groups.append(
+            {"group": get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, 'date': str(date)})
         pass
+    supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
 
+    liquidations = []
     for i in liquidation:
-        supbase.addLiquidation(sup=sup,group=i,date=date)
+        liquidations.append({"group": i, 'date': str(date)})
         pass
+    supbase.addLiquidations(sup=sup, liquidations=liquidations)
     pass
 
 
@@ -240,6 +255,7 @@ def removeDuplicates(table):
 
 def ParasGroupToSoup(group, paras, startday, sup, data):
     date = startday
+    supabasePARA = []
     for para in paras:
         number = para[0]
         ParaMonday: str = para[1]
@@ -259,11 +275,13 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
                 cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
                                             data=data)
                 if (teacher is not None and course is not None and cabinet is not None):
-                    supbase.addPara(group=group.id, number=number, teacher=teacher.id, cabinet=cabinet.id,
-                                    course=course.id, date=str(date + datetime.timedelta(days=loopindex)), sup=sup)
+                    supabasePARA.append(
+                        {'group': group.id, 'number': number, 'course': course.id, 'teacher': teacher.id,
+                         'cabinet': cabinet.id, 'date': str(date + datetime.timedelta(days=loopindex))})
                     pass
             loopindex = loopindex + 1
             pass
+    sup.table('Paras').insert(supabasePARA).execute()
     pass
 
 
@@ -367,7 +385,7 @@ def get_teacher_from_short_name(teachers: List[Teacher], shortName: str):
         fio: List[str] = i.name.split(' ')
         if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
             compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
-            shortcomparer = shortName.replace('.','').replace(',','').replace(' ','').lower().strip()
+            shortcomparer = shortName.replace('.', '').replace(',', '').replace(' ', '').lower().strip()
             if compare_result == shortcomparer:
                 return i
             else:
@@ -466,11 +484,11 @@ def remove_headers(rows):
     return cleared
 
 
-def get_all_tables(filename: str) -> List[List[str]]:
+def get_all_tables(filename: str):
     doc: DocumentType = Document(filename)
     tables = doc.tables
     all_rows = extract_all_tables_to_rows(tables)
-    return all_rows
+    return all_rows, doc.paragraphs
 
 
 def clear_empty_sublists(nested_list: List[List[str]]) -> List[List[str]]:
@@ -492,13 +510,12 @@ def downloadFile(link: str, filename: str):
         print("Failed to download the file.")
 
 
-def getAllLinks(soup: BeautifulSoup):
-    pass
-
-
 def getLastZamenaLink(soup: BeautifulSoup):
-    days = getMonthAvalibleDays(soup=soup, monthIndex=0)
-    return urllib.parse.urljoin(BASEURL, getDaylink(soup=soup, monthIndex=0, day=days[-1]))
+    days, month = getMonthAvalibleDays(soup=soup, monthIndex=0)
+    day = days[-1]
+    year = datetime.datetime.now().year.real
+    date = datetime.date(year=year, month=month, day=day)
+    return urllib.parse.urljoin(BASEURL, getDaylink(soup=soup, monthIndex=0, day=day)), date
 
 
 def getLastZamenaDate(soup: BeautifulSoup):
@@ -509,7 +526,7 @@ def getLastZamenaDate(soup: BeautifulSoup):
 
 
 def getDaylink(soup: BeautifulSoup, monthIndex: int, day: int):
-    table = getMonthTable(soup=soup, monthIndex=monthIndex)
+    table, month = getMonthTable(soup=soup, monthIndex=monthIndex)
     for link in table.find_all('a'):
         text = link.get_text()
         if (link):
@@ -517,48 +534,71 @@ def getDaylink(soup: BeautifulSoup, monthIndex: int, day: int):
                 return link.get('href')
 
 
-def convertMonthNameToIndex(name):
-    months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь',
-              'Декабрь']
-    return months.index(name)
+def convertMonthNameToIndex(name: str):
+    months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь',
+              'декабрь']
+    return months.index(name.lower())
 
 
 def getMonthTable(soup: BeautifulSoup, monthIndex: int):
-    newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
-    oldtables = soup.find_all('table', {'class': 'calendar-month'})
-    newtables.extend(oldtables)
-    return newtables[monthIndex]
+    newtables = soup.find_all(name='table')
+    #newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
+    #oldtables = soup.find_all('table', {'class': 'calendar-month'})
+    #newtables.extend(oldtables)
+    month = convertMonthNameToIndex(newtables[monthIndex].find_all('td',{'class':'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
+    return newtables[monthIndex], month
 
 
-def getAllMonthTables(soup: BeautifulSoup):
-    newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
-    oldtables = soup.find_all('table', {'class': 'calendar-month'})
-    newtables.extend(oldtables)
-    return newtables
+def getAllMonthTables(soup: BeautifulSoup) -> List[ZamTable]:
+    zam_tables: List[ZamTable] = []
+    new_tables = soup.find_all(name='table')
+    for i in new_tables:
+        class_type = ''.join(i['class']).strip()
+        if class_type == 'calendar-month':
+            if len(i.find_all('td', {'class': 'calendar-month-title'})) == 0:
+                header = i.find_previous().find_previous().get_text().replace('\xa0', '').split(' ')
+                index = convertMonthNameToIndex(header[0])
+                year = int(header[1])
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+                pass
+            else:
+                header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(
+                    ' ')
+                index = convertMonthNameToIndex(header[0])
+                year = int(header[1])
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            pass
+        if class_type == 'MsoNormalTable':
+            header = i.find_next(name='strong').get_text().replace('\xa0', '')
+            year = 2024
+            index = convertMonthNameToIndex(header)
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            pass
+        if class_type == 'ui-datepicker-calendar':
+            header = i.find_previous().get_text().replace('\xa0', '').split(' ')
+            index = convertMonthNameToIndex(header[0])
+            year = int(header[1])
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            pass
+    return zam_tables
 
 
-def getAllTablesLinks(tables):
-    links = []
+def getAllTablesLinks(tables: List[ZamTable]) -> List[str]:
+    links: List[str] = []
     for table in tables:
-        tags = table.find_all('a')
-        for tag in tags:
-            text = tag.get_text()
-            if (tag):
-                if text.isdigit():
-                    links.append(urllib.parse.urljoin("https://www.uksivt.ru/zameny/", tag.get('href')))
-
+        links.extend(table.links)
     return links
 
 
 def getMonthAvalibleDays(soup: BeautifulSoup, monthIndex: int):
     days = []
-    table = getMonthTable(soup=soup, monthIndex=monthIndex)
+    table, month = getMonthTable(soup=soup, monthIndex=monthIndex)
     links = table.find_all('a')
     for link in links:
         if (link.get_text().isdigit()):
             if (link):
                 days.append(int(link.get_text()))
-    return days
+    return days, month
 
 
 def getMonthsList(soup: BeautifulSoup):
@@ -597,8 +637,6 @@ def getLatestSchedleFile():
         if (par.get_text(strip=True) != '' and par.get_text(strip=True) is not None):
             print(par.get_text(strip=True).split()[0])
             break
-
-    date = ''
     urls = []
     rows = table.find_all('tr')
     for row in rows:

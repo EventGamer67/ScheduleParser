@@ -17,3 +17,20 @@ def compare_hashes(data1, data2):
 def getFileHash(filePath):
     with open(filePath, 'rb') as file1:
         return hashlib.sha256(file1.read()).hexdigest()
+
+
+def get_file_extension(url):
+    # Разделим ссылку на части с помощью символа '/'
+    parts = url.split('/')
+
+    # Возьмем последний элемент, который обычно содержит имя файла
+    file_name = parts[-1]
+
+    # Разделим имя файла на название и расширение
+    file_parts = file_name.split('.')
+
+    # Если файл имеет расширение, вернем его, иначе вернем пустую строку
+    if len(file_parts) > 1:
+        return file_parts[-1]
+    else:
+        return ""

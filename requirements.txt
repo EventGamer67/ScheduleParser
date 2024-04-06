@@ -8,3 +8,4 @@ aiogram
 apscheduler
 redis
 PyMuPDF
+docx2pdf

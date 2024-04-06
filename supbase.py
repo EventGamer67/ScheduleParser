@@ -19,6 +19,14 @@ def initSupabase():
     return supabase
 
 
+def get_groups_from_string(string: str, data: Data) -> List[Group]:
+    groups = []
+    for gr in data.GROUPS:
+        if (string.lower().strip().__contains__(gr.name.lower().strip())):
+            groups.append(gr)
+    return groups
+
+
 def getParsedsHashes():
     supa = initSupabase()
     response: supabase.APIResponse = supa.from_('parseddays').select('hash').execute()
@@ -29,56 +37,57 @@ def getParsedsHashes():
     return hashes
 
 
-def addPara(sup : Client,group,number,course,teacher,cabinet,date):
-    sup.table('Paras').insert({'group':group,'number':number,'course':course,'teacher':teacher,'cabinet':cabinet,'date':date}).execute()
+def addPara(sup: Client, group, number, course, teacher, cabinet, date):
+    sup.table('Paras').insert(
+        {'group': group, 'number': number, 'course': course, 'teacher': teacher, 'cabinet': cabinet,
+         'date': date}).execute()
     pass
 
 
-def addNewZamenaFileLink(link: str, date,sup):
-    response = sup.table("ZamenaFileLinks").insert({"link":link,"date":str(date)}).execute()
+def addNewZamenaFileLink(link: str, date, sup):
+    response = sup.table("ZamenaFileLinks").insert({"link": link, "date": str(date)}).execute()
     return response
 
 
 def GetZamenaFileLinks() -> List[str]:
     sup = initSupabase()
     response = sup.table("ZamenaFileLinks").select('*').execute()
-    print(response)
     links = []
     for i in response.data:
         links.append(i["link"].strip())
-    print(links)
     return links
 
 
-def addGroup(name,sup,data):
-    response = sup.table("Groups").insert({"name":name,"department":0}).execute()
+def addGroup(name, sup, data):
+    response = sup.table("Groups").insert({"name": name, "department": 0}).execute()
     data.GROUPS = getGroups(sup=sup)
     print(response)
 
 
-def addCourse(name,sup,data):
+def addCourse(name, sup, data):
     rnd = random.Random()
     color = f'{255},{rnd.randint(0, 255)},{rnd.randint(0, 255)},{rnd.randint(0, 255)}'
-    response = sup.table("Courses").insert({"name":name,"color":color}).execute()
+    response = sup.table("Courses").insert({"name": name, "color": color}).execute()
     data.COURSES = getCourses(sup=sup)
     print(response)
 
 
-def addTeacher(name,sup,data):
-    response = sup.table("Teachers").insert({"name":name}).execute()
+def addTeacher(name, sup, data):
+    response = sup.table("Teachers").insert({"name": name}).execute()
     data.TEACHERS = getTeachers(sup=sup)
     print(response)
 
 
-def addCabinet(name,sup,data):
-    response = sup.table("Cabinets").insert({"name":name}).execute()
+def addCabinet(name, sup, data):
+    response = sup.table("Cabinets").insert({"name": name}).execute()
     data.CABINETS = getCabinets(sup=sup)
     print(response)
 
 
 def getGroups(sup):
-    data, count = sup.table("Groups").select('id','name').execute()
+    data, count = sup.table("Groups").select('id', 'name').execute()
     return [Group(item['id'], item['name']) for item in data[1]]
+
 
 def getParaNameAndTeacher(para):
     if (para != ''):
@@ -100,36 +109,61 @@ def getParaNameAndTeacher(para):
             prepodMonday = ParaMonday.split(' ')[-1]
         return [prepodMonday.strip(), ParaMonday.replace(prepodMonday, '').strip()]
 
+
 def getTeachers(sup):
-    data, count = sup.table("Teachers").select('id','name').execute()
+    data, count = sup.table("Teachers").select('id', 'name').execute()
     return [Teacher(item['id'], item['name']) for item in data[1]]
 
 
 def getCabinets(sup):
-    data, count = sup.table("Cabinets").select('id','name').execute()
+    data, count = sup.table("Cabinets").select('id', 'name').execute()
     return [Cabinet(item['id'], item['name']) for item in data[1]]
 
+
 def getCourses(sup):
-    data, count = sup.table("Courses").select('id','name').execute()
+    data, count = sup.table("Courses").select('id', 'name').execute()
     return [Course(item['id'], item['name']) for item in data[1]]
 
-def addZamena(sup,group,number,course,teacher,cabinet,date):
-    response = sup.table("Zamenas").insert({"group": group,'number':int(number),'course':course,'teacher':teacher,'cabinet':cabinet,'date':str(date)}).execute()
+
+def addZamena(sup, group, number, course, teacher, cabinet, date):
+    response = sup.table("Zamenas").insert(
+        {"group": group, 'number': int(number), 'course': course, 'teacher': teacher, 'cabinet': cabinet,
+         'date': str(date)}).execute()
     print(response)
 
 
-def addFullZamenaGroup(sup,group,date):
-    response = sup.table("ZamenasFull").insert({"group": group,'date':str(date)}).execute()
+def addZamenas(sup, zamenas):
+    response = sup.table("Zamenas").insert(zamenas).execute()
     print(response)
 
 
-def addHoliday(sup,date,name):
-    response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
+def add_practices(sup, practices):
+    response = sup.table("Practices").insert(practices).execute()
     print(response)
 
 
-def addLiquidation(sup,group,date):
-    response = sup.table("Liquidation").insert({"group": group,'date':str(date)}).execute()
+def addFullZamenaGroup(sup, group, date):
+    response = sup.table("ZamenasFull").insert({"group": group, 'date': str(date)}).execute()
+    print(response)
+
+
+def addFullZamenaGroups(sup, groups):
+    response = sup.table("ZamenasFull").insert(groups).execute()
+    print(response)
+
+
+def addHoliday(sup, date, name):
+    response = sup.table("Holidays").insert({"name": name, 'date': str(date)}).execute()
+    print(response)
+
+
+def addLiquidation(sup, group, date):
+    response = sup.table("Liquidation").insert({"group": group, 'date': str(date)}).execute()
+    print(response)
+
+
+def addLiquidations(sup, liquidations):
+    response = sup.table("Liquidation").insert(liquidations).execute()
     print(response)
 
 
