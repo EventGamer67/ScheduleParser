@@ -1,15 +1,19 @@
 import asyncio
+import datetime
 import os
 import urllib
+
 import fitz
 import requests
-from pdf2docx import Converter
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-import datetime
-import supbase
-from classes import ZamTable
-from models import Group, Course, Teacher, Cabinet
+from src.code.models import *
+from src.code.models.cabinet_model import Cabinet
+from src.code.models.course_model import Course
+from src.code.models.group_model import Group
+from src.code.models.teacher_model import Teacher
+from src.code.models.zamena_table_model import ZamTable
+from src.code.network import supbase
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 # SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
@@ -19,6 +23,14 @@ from typing import List
 from docx import Document
 from docx.document import Document as DocumentType
 from docx.table import Table
+
+from urllib.request import urlopen
+
+
+def init_soup() -> BeautifulSoup:
+    html = urlopen(SCHEDULE_URL).read()
+    soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
+    return soup
 
 
 async def save_pixmap(pixmap, screenshot_path):
@@ -163,7 +175,7 @@ def parseZamenas(filename: str, date, sup, data):
     editet = []
     for i in workRows:
         try:
-            text = i[1].replace('.',',')
+            text = i[1].replace('.', ',')
             if text[-1] == ',':
                 text = text[0:-1]
                 i[1] = text
@@ -542,10 +554,11 @@ def convertMonthNameToIndex(name: str):
 
 def getMonthTable(soup: BeautifulSoup, monthIndex: int):
     newtables = soup.find_all(name='table')
-    #newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
-    #oldtables = soup.find_all('table', {'class': 'calendar-month'})
-    #newtables.extend(oldtables)
-    month = convertMonthNameToIndex(newtables[monthIndex].find_all('td',{'class':'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
+    # newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
+    # oldtables = soup.find_all('table', {'class': 'calendar-month'})
+    # newtables.extend(oldtables)
+    month = convertMonthNameToIndex(
+        newtables[monthIndex].find_all('td', {'class': 'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
     return newtables[monthIndex], month
 
 
@@ -559,26 +572,26 @@ def getAllMonthTables(soup: BeautifulSoup) -> List[ZamTable]:
                 header = i.find_previous().find_previous().get_text().replace('\xa0', '').split(' ')
                 index = convertMonthNameToIndex(header[0])
                 year = int(header[1])
-                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
                 pass
             else:
                 header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(
                     ' ')
                 index = convertMonthNameToIndex(header[0])
                 year = int(header[1])
-                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
         if class_type == 'MsoNormalTable':
             header = i.find_next(name='strong').get_text().replace('\xa0', '')
             year = 2024
             index = convertMonthNameToIndex(header)
-            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
         if class_type == 'ui-datepicker-calendar':
             header = i.find_previous().get_text().replace('\xa0', '').split(' ')
             index = convertMonthNameToIndex(header[0])
             year = int(header[1])
-            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
     return zam_tables
 

@@ -2,6 +2,8 @@ import datetime
 import urllib
 from typing import List
 
+from src.code.models.zamena_model import Zamena
+
 
 class ZamTable:
     def __init__(self, raw, month_index: int, year: int):
@@ -28,9 +30,3 @@ class ZamTable:
                     link = urllib.parse.urljoin("https://www.uksivt.ru/zameny/", tag.get('href'))
                     zamenas.append(Zamena(link=link, date=datetime.date(year=self.year,month=self.month_index, day=int(text))))
         return zamenas
-
-
-class Zamena:
-    def __init__(self,link: str, date: datetime.date):
-        self.link = link
-        self.date = date

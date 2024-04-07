@@ -1,21 +1,22 @@
-import json
 import os
 import random
-from datetime import datetime
 from typing import List
-
 import requests
 import supabase
-from pdf2docx import Converter
+from pdf2docx import *
 from supabase import create_client, Client
-
-from dataModel import Data
-from models import Group, Course, Cabinet, Teacher
+from parser_secrets import SUPABASE_URL, SUPABASE_ANON_KEY
+from src.code.core.downloader import parseZamenas
+from src.code.models.cabinet_model import Cabinet
+from src.code.models.course_model import Course
+from src.code.models.data_model import Data
+from src.code.models.group_model import Group
+from src.code.models.teacher_model import Teacher
 
 
 def initSupabase():
-    supabase: Client = create_client("https://ojbsikxdqcbuvamygezd.supabase.co",
-                                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw")
+    supabase: Client = create_client(SUPABASE_URL,
+                                     SUPABASE_ANON_KEY)
     return supabase
 
 
@@ -185,7 +186,6 @@ def parse(link, date, sup):
     cv = Converter(f'{filename}.pdf')
     cv.convert(f'{filename}.docx', start=0, end=None)
     cv.close()
-    from downloader import parseZamenas
     parseZamenas(f"{filename}.docx", date, sup=sup, data=data)
     addNewZamenaFileLink(link, date=date, sup=sup)
     os.remove(f"{filename}.pdf")

@@ -1,35 +1,11 @@
-import asyncio
-import logging
-import os
-import sys
-import traceback
-from typing import List
-from urllib.request import urlopen
-import datetime
-from aiogram.fsm.storage import redis
-from aiogram.utils.media_group import MediaGroupBuilder
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from aiogram import Bot, Dispatcher, Router, F
-from aiogram.enums import ParseMode
-from aiogram.filters import Command
-from aiogram.types import Message, MessageEntity, InlineKeyboardMarkup, InlineKeyboardButton
-from bs4 import BeautifulSoup
-from classes import ZamTable
-from downloader import getLastZamenaLink, SCHEDULE_URL, getAllMonthTables, getAllTablesLinks, create_pdf_screenshots, cleanup_temp_files, downloadFile
-from functions import get_file_extension
-from supbase import initSupabase, GetZamenaFileLinks, parse
-from aiogram.types import FSInputFile
-import pytz
-from docx2pdf import convert
+from parser_secrets import *
+from src import *
 
-TOKEN = "5261332325:AAEVl8ACJvWB4Pajhm3HHKkklPjCjoVQr_o"
 sup = initSupabase()
 dp = Dispatcher()
 router = Router()
 admins = [1283168392]
-r = redis.Redis(host='monorail.proxy.rlwy.net', port=13877, decode_responses=True,
-                    password="BNFODHMBEaF3fdNd4akOD2CPg5HgEMla", username="default")
+r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True,password=REDIS_PASSWORD, username=REDIS_USERNAME)
 
 
 async def on_on(bot: Bot):
