@@ -1,3 +1,5 @@
+import datetime
+
 from parser_secrets import *
 from src import *
 
@@ -43,15 +45,21 @@ async def checkNew(bot: Bot):
     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
     site_links = getAllTablesLinks(tables)
-    databaseLinks = GetZamenaFileLinks()
+    databaseLinks : List[ParsedDate] = get_zamena_file_links()
     await on_check(bot=bot)
-    if (site_links.__eq__(databaseLinks)):
+    if site_links.__eq__(databaseLinks):
         pass
     else:
         alreadyFound = await r.lrange("alreadyFound", 0, -1)
-        new = list(set(site_links) - set(databaseLinks) - set(alreadyFound))
+        new = list(set(site_links) - set([x.link for x in databaseLinks]) - set(alreadyFound))
         new.reverse()
         if (len(new) < 1):
+            for i in tables[0].zamenas:
+                if(i.date > datetime.date.today()):
+                    hash = get_remote_file_hash(i.link)
+                    oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
+                    if hash != oldhash:
+                        await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
             return
         for link in new:
             print(f'found {link}')
@@ -182,7 +190,7 @@ async def my_handler(message: Message):
 
 
 async def main() -> None:
-    bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
+    bot = Bot(SCHEDULE_PARSER_TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
     scheduler = AsyncIOScheduler()
     trigger = CronTrigger(minute='0/15', hour='2-17', day_of_week='mon-sat')
     scheduler.add_job(checkNew, trigger, args=(bot,))

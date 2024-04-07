@@ -11,6 +11,7 @@ from src.code.models.cabinet_model import Cabinet
 from src.code.models.course_model import Course
 from src.code.models.data_model import Data
 from src.code.models.group_model import Group
+from src.code.models.parsed_date_model import ParsedDate
 from src.code.models.teacher_model import Teacher
 
 
@@ -50,13 +51,13 @@ def addNewZamenaFileLink(link: str, date, sup):
     return response
 
 
-def GetZamenaFileLinks() -> List[str]:
+def get_zamena_file_links() -> List[ParsedDate]:
     sup = initSupabase()
     response = sup.table("ZamenaFileLinks").select('*').execute()
-    links = []
+    parsed_days: List[ParsedDate] = []
     for i in response.data:
-        links.append(i["link"].strip())
-    return links
+        parsed_days.append(ParsedDate(date=i["date"],link=i["link"],filehash=i["hash"]))
+    return parsed_days
 
 
 def addGroup(name, sup, data):
@@ -190,3 +191,14 @@ def parse(link, date, sup):
     addNewZamenaFileLink(link, date=date, sup=sup)
     os.remove(f"{filename}.pdf")
     os.remove(f"{filename}.docx")
+
+
+# async def fill_supabase_zamenafilelinks_hashes(databaseLinks : List[str], id : List[int]):
+#     loopindex = 0
+#     for i in databaseLinks:
+#         hash = get_remote_file_hash(i)
+#         print(hash)
+#         print(i)
+#         res = sup.table('ZamenaFileLinks').upsert({'id':id[loopindex],'hash':hash}).execute()
+#         print(res)
+#         loopindex+=1
