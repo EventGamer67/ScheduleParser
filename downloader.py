@@ -3,6 +3,7 @@ import os
 import urllib
 import fitz
 import requests
+<<<<<<< Updated upstream:downloader.py
 from pdf2docx import Converter
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
@@ -10,6 +11,20 @@ import datetime
 import supbase
 from classes import ZamTable
 from models import Group, Course, Teacher, Cabinet
+=======
+from bs4 import BeautifulSoup
+import re
+
+from pdf2docx import Converter
+
+from src.code.tools.functions import get_remote_file_hash
+from src.code.models.cabinet_model import Cabinet
+from src.code.models.course_model import Course
+from src.code.models.group_model import Group
+from src.code.models.teacher_model import Teacher
+from src.code.models.zamena_table_model import ZamTable
+from src.code.network import supbase
+>>>>>>> Stashed changes:src/code/core/downloader.py
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 # SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
@@ -47,9 +62,9 @@ async def create_pdf_screenshots(pdf_path):
 
 
 def parseParas(filename: str, date, sup, data):
-    # cv = Converter(f'{filename}.pdf')
-    # cv.convert('schedule' + '.docx', start=0, end=None)
-    # cv.close()
+    cv = Converter(f'{filename}.pdf')
+    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -96,7 +111,7 @@ def parseParas(filename: str, date, sup, data):
     pass
 
 
-def parseZamenas(filename: str, date, sup, data):
+def parseZamenas(filename: str, date, sup, data, link:str):
     all_rows, header = get_all_tables(filename)
 
     practice_groups: List[Group] = []
@@ -111,6 +126,14 @@ def parseZamenas(filename: str, date, sup, data):
             workRows.append(i)
 
     # test cleaning before ликвидация замен
+    temp = []
+
+    for i in workRows:
+        if len(i) == 7:
+            temp.append(i)
+
+    workRows = temp
+
     for i in workRows:
         if i[2] == '' and i[3] != '':
             i[3] = ''
@@ -160,6 +183,13 @@ def parseZamenas(filename: str, date, sup, data):
             fullzamenagroups.append(i[0].strip().replace(' ', ""))
             workRows.remove(i)
 
+    #чистка столбца группы
+    #удаляет лишние -, пробелы, запятые, точки и приводит к uppercase
+    cleaned_groups_workrows = []
+    for i in workRows:
+        i[0] = i[0].replace(' ','').replace(',','').replace('.','').upper()
+        i[0] = re.sub(r'-{2,}', '-', i[0])
+
     editet = []
     for i in workRows:
         try:
@@ -191,11 +221,13 @@ def parseZamenas(filename: str, date, sup, data):
             row[0] = group.id
 
     for row in workRows:
+        print(row[2])
         course = get_course_by_id(data.COURSES, row[2], sup=sup, data=data)
         if course is not None:
             row[2] = course.id
 
     for row in workRows:
+        print(row[3])
         teacher = get_teacher_by_id(data.TEACHERS, row[3], sup=sup, data=data)
         if teacher is not None:
             row[3] = teacher.id
@@ -207,30 +239,35 @@ def parseZamenas(filename: str, date, sup, data):
 
     practice_supabase = []
     for i in practice_groups:
+        print(i)
         practice_supabase.append({"group": i.id, 'date': str(date)})
         pass
-    supbase.add_practices(sup=sup, practices=practice_supabase)
 
     zamenas_supabase = []
     for i in workRows:
         zamenas_supabase.append(
             {"group": i[0], 'number': int(i[1]), 'course': i[2], 'teacher': i[3], 'cabinet': i[4], 'date': str(date)})
         pass
-    supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
 
     full_zamenas_groups = []
     for i in fullzamenagroups:
         full_zamenas_groups.append(
             {"group": get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, 'date': str(date)})
         pass
-    supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
 
     liquidations = []
     for i in liquidation:
         liquidations.append({"group": i, 'date': str(date)})
         pass
+
+    supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
+    supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
+    supbase.add_practices(sup=sup, practices=practice_supabase)
     supbase.addLiquidations(sup=sup, liquidations=liquidations)
+    hash = get_remote_file_hash(link)
+    supbase.addNewZamenaFileLink(link,date=date,sup=sup, hash=hash)
     pass
+
 
 
 def removeDoubleRows(table):
@@ -414,13 +451,13 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
 
 def get_group_by_id(groups, target_name, sup, data) -> Group:
     for group in groups:
-        if group.name == target_name:
+        if group.name.upper() == target_name.replace('_','-').upper():
             return group
         else:
             continue
     try:
-        supbase.addGroup(target_name, sup=sup, data=data)
-        return get_group_by_id(groups=data.GROUPS, target_name=target_name, sup=sup, data=data)
+        supbase.addGroup(target_name.upper(), sup=sup, data=data)
+        return get_group_by_id(groups=data.GROUPS, target_name=target_name.upper(), sup=sup, data=data)
     except:
         return None
     return None

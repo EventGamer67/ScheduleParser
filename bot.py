@@ -76,11 +76,23 @@ async def checkNew(bot: Bot):
         new = list(set(site_links) - set(databaseLinks) - set(alreadyFound))
         new.reverse()
         if (len(new) < 1):
+<<<<<<< Updated upstream
+=======
+            for i in tables[0].zamenas:
+                if(i.date > datetime.date.today()):
+                    hash = get_remote_file_hash(i.link)
+                    oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
+                    if hash != oldhash:
+                        await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
+                        res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link',i.link).execute()
+                        await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
+>>>>>>> Stashed changes
             return
         for link in new:
             print(f'found {link}')
             zam = [x for x in tables if x.links.__contains__(link)][0]
             zamm = [x for x in zam.zamenas if x.link == link][0]
+            main_message = []
             try:
                 await r.lpush("alreadyFound", str(zamm.link))
                 if (link.__contains__('google.com') or link.__contains__('yadi.sk')):
@@ -99,13 +111,16 @@ async def checkNew(bot: Bot):
                     media_group.add_photo(image)
                 try:
                     #await bot.send_media_group(chat_id=admins[0], media=media_group.build())
-                    await bot.send_media_group(-1002035415883, media=media_group.build())
+                    main_message : List[Message] = await bot.send_media_group(-1002035415883, media=media_group.build())
                 except Exception as error:
                     await bot.send_message(chat_id=admins[0], text=str(error))
                 subs = await r.lrange("subs", 0, -1)
                 for i in subs:
                     try:
-                        await bot.send_media_group(i, media=media_group.build())
+                        try:
+                            await bot.forward_messages(chat_id=i, from_chat_id=main_message[0].chat.id,message_ids=[main_message[0].message_id])
+                        except:
+                            await bot.send_media_group(i, media=media_group.build())
                     except Exception as error:
                         try:
                             await bot.send_message(chat_id=admins[0], text=str(error))
@@ -208,7 +223,7 @@ async def my_handler(message: Message):
 async def main() -> None:
     bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
     scheduler = AsyncIOScheduler()
-    trigger = CronTrigger(minute='0/15', hour='2-17', day_of_week='mon-sat')
+    trigger = CronTrigger(minute='0/15', hour='2-17')
     scheduler.add_job(checkNew, trigger, args=(bot,))
     scheduler.start()
     try:

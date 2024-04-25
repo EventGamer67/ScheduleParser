@@ -44,8 +44,8 @@ def addPara(sup: Client, group, number, course, teacher, cabinet, date):
     pass
 
 
-def addNewZamenaFileLink(link: str, date, sup):
-    response = sup.table("ZamenaFileLinks").insert({"link": link, "date": str(date)}).execute()
+def addNewZamenaFileLink(link: str, date, sup, hash : str):
+    response = sup.table("ZamenaFileLinks").insert({"link": link, "date": str(date), "hash":hash}).execute()
     return response
 
 
@@ -185,8 +185,12 @@ def parse(link, date, sup):
     cv = Converter(f'{filename}.pdf')
     cv.convert(f'{filename}.docx', start=0, end=None)
     cv.close()
+<<<<<<< Updated upstream:supbase.py
     from downloader import parseZamenas
     parseZamenas(f"{filename}.docx", date, sup=sup, data=data)
     addNewZamenaFileLink(link, date=date, sup=sup)
+=======
+    parseZamenas(f"{filename}.docx", date, sup=sup, data=data,link=link)
+>>>>>>> Stashed changes:src/code/network/supbase.py
     os.remove(f"{filename}.pdf")
     os.remove(f"{filename}.docx")
