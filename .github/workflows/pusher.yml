@@ -33,6 +33,7 @@ jobs:
             docker stop my-schedule-container || true
             docker rm my-schedule-container || true
             docker run -d \
+              --name my-schedule-container \
               -e SCHEDULER_PARSER_TELEGRAM_TOKEN='5261332325:AAHnbJNzHfwtci6jXc_7Y1mGJJ5wfo0tXQo' \
               -e SCHEDULER_SUPABASE_URL='https://ojbsikxdqcbuvamygezd.supabase.co' \
               -e SCHEDULER_SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw' \
