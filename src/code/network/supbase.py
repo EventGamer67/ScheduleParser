@@ -16,8 +16,8 @@ from src.code.models.teacher_model import Teacher
 
 
 def initSupabase():
-    supabase: Client = create_client(SUPABASE_URL,
-                                     SUPABASE_ANON_KEY)
+    supabase: Client = create_client("https://ojbsikxdqcbuvamygezd.supabase.co",
+                                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw")
     return supabase
 
 
@@ -46,8 +46,8 @@ def addPara(sup: Client, group, number, course, teacher, cabinet, date):
     pass
 
 
-def addNewZamenaFileLink(link: str, date, sup):
-    response = sup.table("ZamenaFileLinks").insert({"link": link, "date": str(date)}).execute()
+def addNewZamenaFileLink(link: str, date, sup, hash : str):
+    response = sup.table("ZamenaFileLinks").insert({"link": link, "date": str(date), "hash":hash}).execute()
     return response
 
 
@@ -187,18 +187,6 @@ def parse(link, date, sup):
     cv = Converter(f'{filename}.pdf')
     cv.convert(f'{filename}.docx', start=0, end=None)
     cv.close()
-    parseZamenas(f"{filename}.docx", date, sup=sup, data=data)
-    addNewZamenaFileLink(link, date=date, sup=sup)
+    parseZamenas(f"{filename}.docx", date, sup=sup, data=data,link=link)
     os.remove(f"{filename}.pdf")
     os.remove(f"{filename}.docx")
-
-
-# async def fill_supabase_zamenafilelinks_hashes(databaseLinks : List[str], id : List[int]):
-#     loopindex = 0
-#     for i in databaseLinks:
-#         hash = get_remote_file_hash(i)
-#         print(hash)
-#         print(i)
-#         res = sup.table('ZamenaFileLinks').upsert({'id':id[loopindex],'hash':hash}).execute()
-#         print(res)
-#         loopindex+=1

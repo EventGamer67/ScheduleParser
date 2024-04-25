@@ -19,8 +19,8 @@ if __name__ == '__main__':
     # parseZamenas(f"zam-{date}.docx", date, sup=sup, data=data)
     # addNewZamenaFileLink(link,date=date,sup=sup)
 
-    zamenas = get_zamena_file_links()
-    print(zamenas[0].link)
+    #zamenas = get_zamena_file_links()
+    #print(zamenas[0].link)
     pass
 
 #docker build -t eventgamer67/my-schedule .чч
