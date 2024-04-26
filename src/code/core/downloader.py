@@ -229,7 +229,6 @@ def parseZamenas(filename: str, date, sup, data, link:str):
 
     practice_supabase = []
     for i in practice_groups:
-        print(i)
         practice_supabase.append({"group": i.id, 'date': str(date)})
         pass
 
@@ -251,9 +250,12 @@ def parseZamenas(filename: str, date, sup, data, link:str):
         pass
 
     supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
-    supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
-    supbase.add_practices(sup=sup, practices=practice_supabase)
-    supbase.addLiquidations(sup=sup, liquidations=liquidations)
+    if len(full_zamenas_groups) > 0:
+        supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
+    if len(practice_supabase) > 0:
+        supbase.add_practices(sup=sup, practices=practice_supabase)
+    if len(liquidations) > 0:
+        supbase.addLiquidations(sup=sup, liquidations=liquidations)
     hash = get_remote_file_hash(link)
     supbase.addNewZamenaFileLink(link,date=date,sup=sup, hash=hash)
     pass
@@ -446,6 +448,7 @@ def get_group_by_id(groups, target_name, sup, data) -> Group:
         else:
             continue
     try:
+        print(target_name)
         supbase.addGroup(target_name.upper(), sup=sup, data=data)
         return get_group_by_id(groups=data.GROUPS, target_name=target_name.upper(), sup=sup, data=data)
     except:

@@ -183,7 +183,6 @@ def parse(link, date, sup):
             file.flush()
     else:
         raise Exception("Файл не загружен")
-
     cv = Converter(f'{filename}.pdf')
     cv.convert(f'{filename}.docx', start=0, end=None)
     cv.close()

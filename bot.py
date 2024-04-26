@@ -60,9 +60,10 @@ async def checkNew(bot: Bot):
                     oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
                     if hash != oldhash:
                         await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
+                        res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
+                        await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
             return
         for link in new:
-            print(f'found {link}')
             zam = [x for x in tables if x.links.__contains__(link)][0]
             zamm = [x for x in zam.zamenas if x.link == link][0]
             try:
@@ -103,7 +104,6 @@ async def checkNew(bot: Bot):
                 sup.table('ZamenaFileLinks').delete().eq('date', datess).execute()
                 parse(link=zamm.link,date=datess,sup=sup)
                 await bot.send_message(chat_id=admins[0], text='parsed')
-                os.remove(f"{filename}.docx")
             except Exception as error:
                 await bot.send_message(chat_id=admins[0], text=f'{str(error)}\n{str(error.__traceback__)}')
 
