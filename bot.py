@@ -192,7 +192,7 @@ async def my_handler(message: Message):
 async def main() -> None:
     bot = Bot(SCHEDULE_PARSER_TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
     scheduler = AsyncIOScheduler()
-    trigger = CronTrigger(minute='0/15', hour='2-17')
+    trigger = CronTrigger(minute='0/10', hour='2-17')
     scheduler.add_job(checkNew, trigger, args=(bot,))
     scheduler.start()
     try:
