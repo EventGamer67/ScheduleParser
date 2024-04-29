@@ -32,6 +32,7 @@ jobs:
             docker pull eventgamer67/my-schedule
             docker stop my-schedule-container || true
             docker rm my-schedule-container || true
+            docker rmi eventgamer67/my-schedule || true
             docker run -d \
               --name my-schedule-container \
               -e SCHEDULER_PARSER_TELEGRAM_TOKEN='5261332325:AAHnbJNzHfwtci6jXc_7Y1mGJJ5wfo0tXQo' \

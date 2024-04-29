@@ -1,3 +1,4 @@
+import datetime
 import os
 import random
 from typing import List
@@ -169,13 +170,13 @@ def addLiquidations(sup, liquidations):
     print(response)
 
 
-def parse(link, date, sup):
+def parse(link, date : datetime.date, sup):
     data = Data
     data.GROUPS = getGroups(sup=sup)
     data.CABINETS = getCabinets(sup=sup)
     data.TEACHERS = getTeachers(sup=sup)
     data.COURSES = getCourses(sup=sup)
-    filename = f"zam-{date}"
+    filename = f"zam-{date.year}-{date.month}-{date.day}"
     response = requests.get(link)
     if response.status_code == 200:
         with open(f"{filename}.pdf", 'wb') as file:
@@ -187,5 +188,10 @@ def parse(link, date, sup):
     cv.convert(f'{filename}.docx', start=0, end=None)
     cv.close()
     parseZamenas(f"{filename}.docx", date, sup=sup, data=data,link=link)
-    os.remove(f"{filename}.pdf")
-    os.remove(f"{filename}.docx")
+    try:
+        if(os.path.isfile(f"{filename}.pdf")):
+            os.remove(f"{filename}.pdf")
+        if (os.path.isfile(f"{filename}.docx")):
+            os.remove(f"{filename}.docx")
+    except Exception as error:
+        print(error)

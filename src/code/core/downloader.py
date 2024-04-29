@@ -52,16 +52,17 @@ async def create_pdf_screenshots(pdf_path):
 
 
 def parseParas(filename: str, date, sup, data):
-    cv = Converter(f'{filename}.pdf')
-    cv.convert('schedule' + '.docx', start=0, end=None)
-    cv.close()
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert('schedule' + '.docx', start=0, end=None)
+    # cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:
         text = i.text
         if (text.__contains__("Группа - ")):
             filter = text.split(' ')
-            groups.append(filter[-1])
+            gr = supbase.get_groups_from_string(filter[-1], data=data)[0].name
+            groups.append(gr)
 
     for i in groups:
         if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS, data=data):
@@ -87,7 +88,6 @@ def parseParas(filename: str, date, sup, data):
 
     temp = clearDiscipline(temp)
     temp = clearSingleStrings(temp)
-
     divided = defineGroups(groups, temp)
     for gruppa in divided:
         paras = divided[gruppa]
@@ -96,6 +96,7 @@ def parseParas(filename: str, date, sup, data):
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
+        print(gruppa)
         ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),
                          paras=divided[gruppa], sup=sup, startday=date, data=data)
     pass
@@ -586,14 +587,21 @@ def getAllMonthTables(soup: BeautifulSoup) -> List[ZamTable]:
         class_type = ''.join(i['class']).strip()
         if class_type == 'calendar-month':
             if len(i.find_all('td', {'class': 'calendar-month-title'})) == 0:
-                header = i.find_previous().find_previous().get_text().replace('\xa0', '').split(' ')
-                index = convertMonthNameToIndex(header[0])
-                year = int(header[1])
+                header = "Ничего"
+                if(i.find_all('a',{'class':'calendar-month-title'})):
+                    header = i.find_next('a',{'class':'calendar-month-title'}).get_text()
+                else:
+                    header = i.find_previous().find_previous().get_text().replace('\xa0', '')
+                year = int(datetime.datetime.now().year)
+                if(len(header.split(' ')) > 1):
+                    index = convertMonthNameToIndex(header.split(' ')[0])
+                    year = int(header.split(' ')[1])
+                else:
+                    index = convertMonthNameToIndex(header.replace(' ',''))
                 zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
                 pass
             else:
-                header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(
-                    ' ')
+                header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(' ')
                 index = convertMonthNameToIndex(header[0])
                 year = int(header[1])
                 zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
