@@ -542,11 +542,12 @@ def downloadFile(link: str, filename: str):
 
 
 def getLastZamenaLink(soup: BeautifulSoup):
-    days, month = getMonthAvalibleDays(soup=soup, monthIndex=0)
-    day = days[-1]
-    year = datetime.datetime.now().year.real
-    date = datetime.date(year=year, month=month, day=day)
-    return urllib.parse.urljoin(BASEURL, getDaylink(soup=soup, monthIndex=0, day=day)), date
+    # days, month = getMonthAvalibleDays(soup=soup, monthIndex=0)
+    # day = days[-1]
+    # year = datetime.datetime.now().year.real
+    # date = datetime.date(year=year, month=month, day=day)
+    table = getAllMonthTables(soup)[0]
+    return table.zamenas[0].link, table.zamenas[0].date
 
 
 def getLastZamenaDate(soup: BeautifulSoup):
@@ -577,6 +578,7 @@ def getMonthTable(soup: BeautifulSoup, monthIndex: int):
     #oldtables = soup.find_all('table', {'class': 'calendar-month'})
     #newtables.extend(oldtables)
     month = convertMonthNameToIndex(newtables[monthIndex].find_all('td',{'class':'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
+    tables = getAllMonthTables(soup)
     return newtables[monthIndex], month
 
 

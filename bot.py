@@ -57,11 +57,14 @@ async def checkNew(bot: Bot):
             for i in tables[0].zamenas:
                 if(i.date > datetime.date.today()):
                     hash = get_remote_file_hash(i.link)
-                    oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
-                    if hash != oldhash:
-                        await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
-                        res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
-                        await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
+                    try:
+                        oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
+                        if hash != oldhash:
+                            await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
+                            res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
+                            await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
+                    except Exception as error:
+                        await bot.send_message(chat_id=admins[0], text=str(error))
             return
         for link in new:
             zam = [x for x in tables if x.links.__contains__(link)][0]
@@ -186,7 +189,7 @@ async def my_handler(message: Message):
         html = urlopen(SCHEDULE_URL).read()
         soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
         link, date = getLastZamenaLink(soup=soup)
-        await message.answer(link)
+        await message.answer(f"{link} {date}")
 
 
 async def main() -> None:
