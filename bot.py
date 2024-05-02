@@ -61,8 +61,41 @@ async def checkNew(bot: Bot):
                         oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
                         if hash != oldhash:
                             await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
+                            extension = get_file_extension(i.link)
+                            filename = i.link.split('/')[-1].split('.')[0]
+                            downloadFile(link=i.link, filename=f"{filename}.{extension}")
+                            if extension == 'pdf':
+                                screenshot_paths = await create_pdf_screenshots(filename)
+                            if extension == 'docx':
+                                convert(f"{filename}.{extension}")
+                                screenshot_paths = await create_pdf_screenshots(filename)
+                            media_group = MediaGroupBuilder(
+                                caption=f"Перезалив замен на <a href='{i.link}'>{i.date}</a>  ")
+                            for i in screenshot_paths:
+                                image = FSInputFile(i)
+                                media_group.add_photo(image)
+                            try:
+                                await bot.send_media_group(-1002035415883, media=media_group.build())
+                            except Exception as error:
+                                await bot.send_message(chat_id=admins[0], text=str(error))
+                            subs = await r.lrange("subs", 0, -1)
+                            for i in subs:
+                                try:
+                                    await bot.send_media_group(i, media=media_group.build())
+                                except Exception as error:
+                                    try:
+                                        await bot.send_message(chat_id=admins[0], text=str(error))
+                                    except:
+                                        continue
+                            cleanup_temp_files(screenshot_paths)
+                            os.remove(f"{filename}.pdf")
+                            datess = datetime.date(i.date.year, i.date.month, i.date.day)
+                            sup.table('Zamenas').delete().eq('date', datess).execute()
+                            sup.table('ZamenasFull').delete().eq('date', datess).execute()
                             res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
                             await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
+                            parse(link=i.link, date=datess, sup=sup)
+                            await bot.send_message(chat_id=admins[0], text='parsed')
                     except Exception as error:
                         await bot.send_message(chat_id=admins[0], text=str(error))
             return
@@ -190,6 +223,36 @@ async def my_handler(message: Message):
         soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
         link, date = getLastZamenaLink(soup=soup)
         await message.answer(f"{link} {date}")
+
+
+@dp.message(F.text, Command("merge_cab"))
+async def my_handler(message: Message):
+    if message.chat.id in admins:
+        merge_from = message.text.split()[1]
+        merge_to = message.text.split()[2]
+        data = sup.table('Paras').update({'cabinet':merge_to}).eq('cabinet',merge_from).execute()
+        print(data)
+        count = len(data.data)
+        data = sup.table('Zamenas').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
+        print(data)
+        count = count + len(data.data)
+        sup.table('Cabinets').delete().eq('id', merge_from).execute()
+        await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
+
+
+@dp.message(F.text, Command("merge_teacher"))
+async def my_handler(message: Message):
+    if message.chat.id in admins:
+        merge_from = message.text.split()[1]
+        merge_to = message.text.split()[2]
+        data = sup.table('Paras').update({'teacher':merge_to}).eq('teacher',merge_from).execute()
+        print(data)
+        count = len(data.data)
+        data = sup.table('Zamenas').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
+        print(data)
+        count = count + len(data.data)
+        sup.table('Teachers').delete().eq('id', merge_from).execute()
+        await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
 
 
 async def main() -> None:
