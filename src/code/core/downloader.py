@@ -547,7 +547,7 @@ def getLastZamenaLink(soup: BeautifulSoup):
     # year = datetime.datetime.now().year.real
     # date = datetime.date(year=year, month=month, day=day)
     table = getAllMonthTables(soup)[0]
-    return table.zamenas[0].link, table.zamenas[0].date
+    return table.zamenas[-1].link, table.zamenas[-1].date
 
 
 def getLastZamenaDate(soup: BeautifulSoup):
