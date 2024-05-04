@@ -1,6 +1,7 @@
 import datetime
 import os
 import random
+import re
 from typing import List
 import requests
 import supabase
@@ -94,8 +95,8 @@ def getGroups(sup):
 
 def getParaNameAndTeacher(para):
     if (para != ''):
-        ParaMonday = para.replace('\n', ' ')
-        prepodMonday = ''
+        temp = para.replace('\n', ' ').replace('\t', ' ')
+        ParaMonday = re.sub(r' {2,}', ' ', temp)
         if (not ParaMonday.__contains__("Резерв")):
             sample = ParaMonday.split(' ')
             try:
@@ -109,7 +110,12 @@ def getParaNameAndTeacher(para):
                     except:
                         prepodMonday = f"{sample}"
         else:
-            prepodMonday = ParaMonday.split(' ')[-1]
+            if len(ParaMonday.split(' ')) > 3:
+                sample = ParaMonday.split(' ')
+                prepodMonday = f"{sample[-3]} {sample[-2]}"
+                return [prepodMonday, re.sub(r' {2,}', ' ', ParaMonday.replace(prepodMonday, '').strip())]
+            else:
+                prepodMonday = ParaMonday.split(' ')[-1]
         return [prepodMonday.strip(), ParaMonday.replace(prepodMonday, '').strip()]
 
 

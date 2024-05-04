@@ -15,7 +15,7 @@ if __name__ == '__main__':
     #parse(link, date, sup)
 
 
-    parseParas('06.05', date=datetime.datetime(2024, 5, 6), sup=sup, data=data)
+    parseParas('29.04', date=datetime.datetime(2024, 4, 29), sup=sup, data=data)
     pass
 
 

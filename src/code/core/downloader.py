@@ -53,9 +53,9 @@ async def create_pdf_screenshots(pdf_path):
 
 def parseParas(filename: str, date, sup, data):
     cv = Converter(f'{filename}.pdf')
-    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.convert(f'{filename} schedule' + '.docx', start=0, end=None)
     cv.close()
-    doc: DocumentType = Document('schedule.docx')
+    doc: DocumentType = Document(f'{filename} schedule.docx')
     groups = []
     for i in doc.paragraphs:
         text = i.text
@@ -64,9 +64,9 @@ def parseParas(filename: str, date, sup, data):
             gr = supbase.get_groups_from_string(filter[-1], data=data)[0].name
             groups.append(gr)
 
-    for i in groups:
-        if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS, data=data):
-            pass
+    # for i in groups:
+    #     if get_group_by_id(target_name=i, sup=sup, groups=data.GROUPS, data=data):
+    #         pass
 
     tables = []
     for i in doc.tables:
@@ -89,6 +89,8 @@ def parseParas(filename: str, date, sup, data):
     temp = clearDiscipline(temp)
     temp = clearSingleStrings(temp)
     divided = defineGroups(groups, temp)
+
+
     for gruppa in divided:
         paras = divided[gruppa]
         divided[gruppa] = removeDuplicates(paras)
@@ -96,9 +98,7 @@ def parseParas(filename: str, date, sup, data):
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
-        print(gruppa)
-        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),
-                         paras=divided[gruppa], sup=sup, startday=date, data=data)
+        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),paras=divided[gruppa], sup=sup, startday=date, data=data)
     pass
 
 
@@ -206,6 +206,9 @@ def parseZamenas(filename: str, date, sup, data, link:str):
             continue
     workRows = editet
 
+    for i in workRows:
+        print(i)
+
     for row in workRows:
         group = get_group_by_id(data.GROUPS, row[0], sup=sup, data=data)
         if group is not None:
@@ -253,10 +256,13 @@ def parseZamenas(filename: str, date, sup, data, link:str):
     supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
     if len(full_zamenas_groups) > 0:
         supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
+        pass
     if len(practice_supabase) > 0:
         supbase.add_practices(sup=sup, practices=practice_supabase)
+        pass
     if len(liquidations) > 0:
         supbase.addLiquidations(sup=sup, liquidations=liquidations)
+        pass
     hash = get_remote_file_hash(link)
     supbase.addNewZamenaFileLink(link,date=date,sup=sup, hash=hash)
     pass
@@ -300,6 +306,7 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
         for day in days:
             aww = supbase.getParaNameAndTeacher(day)
             if aww is not None:
+                print(aww)
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
                 cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
@@ -385,9 +392,9 @@ def clearDiscipline(table):
     return table
 
 
-def get_cabinet_by_id(cabinets, target_name, sup, data) -> Cabinet:
+def get_cabinet_by_id(cabinets : List[Cabinet], target_name :str, sup, data) -> Cabinet:
     for cabinet in cabinets:
-        if cabinet.name == target_name:
+        if cabinet.name.lower().replace(' ','').replace('.','').replace('-','').replace('\n','') == target_name.lower().replace(' ','').replace('.','').replace('-','').replace('\n',''):
             return cabinet
         else:
             continue
