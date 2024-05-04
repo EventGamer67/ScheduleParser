@@ -52,9 +52,9 @@ async def create_pdf_screenshots(pdf_path):
 
 
 def parseParas(filename: str, date, sup, data):
-    # cv = Converter(f'{filename}.pdf')
-    # cv.convert('schedule' + '.docx', start=0, end=None)
-    # cv.close()
+    cv = Converter(f'{filename}.pdf')
+    cv.convert('schedule' + '.docx', start=0, end=None)
+    cv.close()
     doc: DocumentType = Document('schedule.docx')
     groups = []
     for i in doc.paragraphs:

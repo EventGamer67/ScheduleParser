@@ -71,17 +71,17 @@ async def checkNew(bot: Bot):
                                 screenshot_paths = await create_pdf_screenshots(filename)
                             media_group = MediaGroupBuilder(
                                 caption=f"Перезалив замен на <a href='{i.link}'>{i.date}</a>  ")
-                            for i in screenshot_paths:
-                                image = FSInputFile(i)
+                            for j in screenshot_paths:
+                                image = FSInputFile(j)
                                 media_group.add_photo(image)
                             try:
                                 await bot.send_media_group(-1002035415883, media=media_group.build())
                             except Exception as error:
                                 await bot.send_message(chat_id=admins[0], text=str(error))
                             subs = await r.lrange("subs", 0, -1)
-                            for i in subs:
+                            for j in subs:
                                 try:
-                                    await bot.send_media_group(i, media=media_group.build())
+                                    await bot.send_media_group(j, media=media_group.build())
                                 except Exception as error:
                                     try:
                                         await bot.send_message(chat_id=admins[0], text=str(error))
@@ -89,7 +89,7 @@ async def checkNew(bot: Bot):
                                         continue
                             cleanup_temp_files(screenshot_paths)
                             os.remove(f"{filename}.pdf")
-                            datess = datetime.date(i.date.year, i.date.month, i.date.day)
+                            datess = datetime.datetime(year=i.date.year, month= i.date.month,day=i.date.day)
                             sup.table('Zamenas').delete().eq('date', datess).execute()
                             sup.table('ZamenasFull').delete().eq('date', datess).execute()
                             res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
@@ -211,6 +211,36 @@ async def my_handlers(message: Message):
             date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
             link = message.text.split(' ')[2]
             parse(link=link,date=date,sup=sup)
+            await message.answer(f'parsed')
+        except Exception as error:
+            await message.answer(text=f'{str(error)}\n{traceback.format_exc()}')
+
+
+@dp.message(F.text, Command("paras"))
+async def my_handlers(message: Message):
+    if message.chat.id in admins:
+        try:
+            date = message.text.split(' ')[1]
+            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            link = message.text.split(' ')[2]
+            sup = initSupabase()
+            data = Data(sup=sup)
+            filename = f"zam-{date.year}-{date.month}-{date.day}"
+            response = requests.get(link)
+            if response.status_code == 200:
+                with open(f"{filename}.pdf", 'wb') as file:
+                    file.write(response.content)
+                    file.flush()
+            else:
+                raise Exception("Файл не загружен")
+            parseParas(filename, date=date, sup=sup, data=data)
+            try:
+                if (os.path.isfile(f"{filename}.pdf")):
+                    os.remove(f"{filename}.pdf")
+                if (os.path.isfile(f"{filename}.docx")):
+                    os.remove(f"{filename}.docx")
+            except Exception as error:
+                await message.answer(str(error))
             await message.answer(f'parsed')
         except Exception as error:
             await message.answer(text=f'{str(error)}\n{traceback.format_exc()}')
