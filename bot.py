@@ -58,7 +58,11 @@ async def checkNew(bot: Bot):
                 if(i.date > datetime.date.today()):
                     hash = get_remote_file_hash(i.link)
                     try:
+                        print("here3")
+                        print(databaseLinks[-1].link)
+                        print(i.link)
                         oldhash = [x for x in databaseLinks if x.link == i.link][0].hash
+                        print("here4")
                         if hash != oldhash:
                             await bot.send_message(chat_id=admins[0], text=f'Обнаружен перезалив на {i.link} {i.date}')
                             extension = get_file_extension(i.link)
@@ -97,7 +101,8 @@ async def checkNew(bot: Bot):
                             parse(link=i.link, date=datess, sup=sup)
                             await bot.send_message(chat_id=admins[0], text='parsed')
                     except Exception as error:
-                        await bot.send_message(chat_id=admins[0], text=str(error))
+                        print(error)
+                        await bot.send_message(chat_id=admins[0], text=str(error.__str__()))
             return
         for link in new:
             zam = [x for x in tables if x.links.__contains__(link)][0]
