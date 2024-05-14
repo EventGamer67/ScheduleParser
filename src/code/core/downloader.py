@@ -135,6 +135,7 @@ def parseZamenas(filename: str, date, sup, data, link:str):
     workRows = clearNonDataRows(workRows)
     workRows = clear_empty_sublists(workRows)
     workRows = remove_headers(workRows)
+    workRows = removeDemoExam(workRows)
 
     fullzamenagroups = []
     liquidation = []
@@ -244,8 +245,8 @@ def parseZamenas(filename: str, date, sup, data, link:str):
 
     full_zamenas_groups = []
     for i in fullzamenagroups:
-        full_zamenas_groups.append(
-            {"group": get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, 'date': str(date)})
+        print(i)
+        full_zamenas_groups.append({"group": get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, 'date': str(date)})
         pass
 
     liquidations = []
@@ -518,6 +519,14 @@ def remove_headers(rows):
     cleared = []
     for i in rows:
         if (i[0] != "Группа"):
+            cleared.append(i)
+    return cleared
+
+
+def removeDemoExam(rows):
+    cleared = []
+    for i in rows:
+        if not i[0].__contains__("экзамен"):
             cleared.append(i)
     return cleared
 
