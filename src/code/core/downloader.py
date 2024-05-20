@@ -186,13 +186,14 @@ def parseZamenas(filename: str, date, sup, data, link:str):
     for i in workRows:
         try:
             text = i[1].replace('.',',')
+            print(text)
             if text[-1] == ',':
                 text = text[0:-1]
                 i[1] = text
             if text[0] == ',':
                 text = text[0:len(text) - 1]
                 i[1] = text
-            paras = i[1].split(',')
+            paras = i[1].replace('.',',').split(',')
             row = i.copy()
             if (len(paras) >= 2):
                 for para in paras:
