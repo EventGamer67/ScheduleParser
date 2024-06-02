@@ -86,10 +86,31 @@ def parseParas(filename: str, date, sup, data):
             pass
         fin.append(i)
 
+
     temp = clearDiscipline(temp)
     temp = clearSingleStrings(temp)
-    divided = defineGroups(groups, temp)
+    #temp = clearTime(temp)
 
+    # es = []
+    # for i in temp:
+    #     if len(i) < 3:
+    #         continue
+    #     else:
+    #         es.append(i)
+
+    # old_row = []
+    # for i in es:
+    #     if i[0] == '' and i[1] == '' and i[2] == '' and i[3] == '' and i[4] == '' and i[5] == '' and i[6] != '' and i[7] == '' and i[8] == '' and i[9] == '' and i[10] == '' and i[11] == '' and i[12] == '' and i[13] == '':
+    #         old_row[5] = f"{old_row[5]} \n{i[6]}"
+    #     old_row = i
+
+
+    #temp = es
+
+    for i in temp:
+        print(i)
+
+    divided = defineGroups(groups, temp)
 
     for gruppa in divided:
         paras = divided[gruppa]
@@ -98,6 +119,14 @@ def parseParas(filename: str, date, sup, data):
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
+
+        # for i in paras:
+        #     if len(i) < 10:
+        #         print("GERE")
+        #         for s in range(12 - len(i)):
+        #             i.append('')
+
+
         ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),paras=divided[gruppa], sup=sup, startday=date, data=data)
     pass
 
@@ -308,7 +337,6 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
         for day in days:
             aww = supbase.getParaNameAndTeacher(day)
             if aww is not None:
-                print(aww)
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
                 cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
@@ -319,6 +347,7 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
                          'cabinet': cabinet.id, 'date': str(date + datetime.timedelta(days=loopindex))})
                     pass
             loopindex = loopindex + 1
+
             pass
     sup.table('Paras').insert(supabasePARA).execute()
     pass
@@ -354,13 +383,16 @@ def recoverTeachers(table):
 def defineGroups(groups, table):
     groupIndex = -1
     groupParas = []
-    group = 'x'
+    group = groups[0]
     divided = {}
     for row in table:
         if (row[0] == '№'):
-            divided[group] = groupParas
-            groupIndex = groupIndex + 1
-            group = groups[groupIndex]
+            try:
+                divided[group] = groupParas
+                groupIndex = groupIndex + 1
+                group = groups[groupIndex]
+            except Exception as err:
+                print(err)
             groupParas = []
         else:
             groupParas.append(row)
@@ -368,9 +400,18 @@ def defineGroups(groups, table):
     else:
         divided[group] = groupParas
         pass
-    divided.pop('x')
     return divided
 
+
+def clearTime(rows):
+    cleared = []
+    for row in rows:
+        if(row[1] != ''):
+            row.pop(1)
+            cleared.append(row)
+        else:
+            cleared.append(row)
+    return cleared
 
 def clearSingleStrings(table):
     cleared = []
@@ -387,7 +428,7 @@ def clearDiscipline(table):
                     row[6] == ''):
                 table.remove(row)
                 continue
-            if (row[1].__contains__("Дисциплина, вид занятия, преподаватель")):
+            if (row[1].__contains__("Дисциплина, вид занятия, преподаватель") or row[2].__contains__("Дисциплина, вид занятия, преподаватель") ):
                 table.remove(row)
                 continue
             pass
