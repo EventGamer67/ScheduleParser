@@ -1,5 +1,7 @@
 import datetime
 
+from aiogram.client.default import DefaultBotProperties
+
 from parser_secrets import *
 from src import *
 
@@ -291,7 +293,7 @@ async def my_handler(message: Message):
 
 
 async def main() -> None:
-    bot = Bot(SCHEDULE_PARSER_TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
+    bot = Bot(SCHEDULE_PARSER_TELEGRAM_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
     scheduler = AsyncIOScheduler()
     trigger = CronTrigger(minute='0/15', hour='2-17')
     scheduler.add_job(checkNew, trigger, args=(bot,))
