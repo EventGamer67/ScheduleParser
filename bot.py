@@ -4,12 +4,14 @@ from aiogram.client.default import DefaultBotProperties
 
 from parser_secrets import *
 from src import *
+from src.firebase.firebase import send_message_to_topic
 
 sup = initSupabase()
 dp = Dispatcher()
 router = Router()
 admins = [1283168392]
-r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True,password=REDIS_PASSWORD, username=REDIS_USERNAME)
+r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True, password=REDIS_PASSWORD,
+                username=REDIS_USERNAME)
 
 
 async def on_on(bot: Bot):
@@ -19,7 +21,9 @@ async def on_on(bot: Bot):
     times = datetime.datetime.now(tz=tz)
     hours = times.strftime("%H")
     mins = times.strftime("%M")
-    res = await bot.edit_message_text(f"🟢 🌊 uksivt.xyz\nПоиск по группам, преподам и кабинетам\nвключен {f'{hours}:{mins} {times.day}.{times.month}'}",chat_id=-1002035415883,  message_id=80,reply_markup=keyboard)
+    res = await bot.edit_message_text(
+        f"🟢 🌊 uksivt.xyz\nПоиск по группам, преподам и кабинетам\nвключен {f'{hours}:{mins} {times.day}.{times.month}'}",
+        chat_id=-1002035415883, message_id=80, reply_markup=keyboard)
 
 
 async def on_exit(bot: Bot):
@@ -29,17 +33,21 @@ async def on_exit(bot: Bot):
     times = datetime.datetime.now(tz=tz)
     hours = times.strftime("%H")
     mins = times.strftime("%M")
-    res = await bot.edit_message_text(f"💤 🌊 uksivt.xyz\nПоиск по группам, преподам и кабинетам\nвыключен {f'{hours}:{mins} {times.day}.{times.month}'}", chat_id=-1002035415883,reply_markup=keyboard, message_id=80)
+    res = await bot.edit_message_text(
+        f"💤 🌊 uksivt.xyz\nПоиск по группам, преподам и кабинетам\nвыключен {f'{hours}:{mins} {times.day}.{times.month}'}",
+        chat_id=-1002035415883, reply_markup=keyboard, message_id=80)
 
 
 async def on_check(bot: Bot):
-    #await bot.send_message(chat_id=admins[0], text='проверил')
+    # await bot.send_message(chat_id=admins[0], text='проверил')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🐋", url="https://uksivt.xyz/")]])
     tz = pytz.timezone('Asia/Yekaterinburg')
     times = datetime.datetime.now(tz=tz)
     hours = times.strftime("%H")
     mins = times.strftime("%M")
-    res = await bot.edit_message_text(f"🟢 Последняя проверка {f'{hours}:{mins} {times.day}.{times.month}'}\nuksivt.xyz Поиск по группам, преподам и кабинетам",chat_id=-1002035415883,  message_id=80,reply_markup=keyboard)
+    res = await bot.edit_message_text(
+        f"🟢 Последняя проверка {f'{hours}:{mins} {times.day}.{times.month}'}\nuksivt.xyz Поиск по группам, преподам и кабинетам",
+        chat_id=-1002035415883, message_id=80, reply_markup=keyboard)
 
 
 async def checkNew(bot: Bot):
@@ -47,7 +55,7 @@ async def checkNew(bot: Bot):
     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
     site_links = getAllTablesLinks(tables)
-    databaseLinks : List[ParsedDate] = get_zamena_file_links()
+    databaseLinks: List[ParsedDate] = get_zamena_file_links()
     await on_check(bot=bot)
     if site_links.__eq__(databaseLinks):
         pass
@@ -57,7 +65,7 @@ async def checkNew(bot: Bot):
         new.reverse()
         if (len(new) < 1):
             for i in tables[0].zamenas:
-                if(i.date > datetime.date.today()):
+                if (i.date > datetime.date.today()):
                     hash = get_remote_file_hash(i.link)
                     try:
                         print("here3")
@@ -77,11 +85,15 @@ async def checkNew(bot: Bot):
                                 screenshot_paths = await create_pdf_screenshots(filename)
                             media_group = MediaGroupBuilder(
                                 caption=f"Перезалив замен на <a href='{i.link}'>{i.date}</a>  ")
+
                             for j in screenshot_paths:
                                 image = FSInputFile(j)
                                 media_group.add_photo(image)
                             try:
+
                                 await bot.send_media_group(-1002035415883, media=media_group.build())
+                                send_message_to_topic('main', 'Перезалив замен',
+                                                      f'Обнаружен перезалив замен на {i.date}')
                             except Exception as error:
                                 await bot.send_message(chat_id=admins[0], text=str(error))
                             subs = await r.lrange("subs", 0, -1)
@@ -95,7 +107,7 @@ async def checkNew(bot: Bot):
                                         continue
                             cleanup_temp_files(screenshot_paths)
                             os.remove(f"{filename}.pdf")
-                            datess = datetime.datetime(year=i.date.year, month= i.date.month,day=i.date.day)
+                            datess = datetime.datetime(year=i.date.year, month=i.date.month, day=i.date.day)
                             sup.table('Zamenas').delete().eq('date', datess).execute()
                             sup.table('ZamenasFull').delete().eq('date', datess).execute()
                             res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
@@ -126,8 +138,9 @@ async def checkNew(bot: Bot):
                     image = FSInputFile(i)
                     media_group.add_photo(image)
                 try:
-                    #await bot.send_media_group(chat_id=admins[0], media=media_group.build())
+                    # await bot.send_media_group(chat_id=admins[0], media=media_group.build())
                     await bot.send_media_group(-1002035415883, media=media_group.build())
+                    send_message_to_topic('main', 'Новые замены', f'Новые замены на {zamm.date}')
                 except Exception as error:
                     await bot.send_message(chat_id=admins[0], text=str(error))
                 subs = await r.lrange("subs", 0, -1)
@@ -145,7 +158,7 @@ async def checkNew(bot: Bot):
                 sup.table('Zamenas').delete().eq('date', datess).execute()
                 sup.table('ZamenasFull').delete().eq('date', datess).execute()
                 sup.table('ZamenaFileLinks').delete().eq('date', datess).execute()
-                parse(link=zamm.link,date=datess,sup=sup)
+                parse(link=zamm.link, date=datess, sup=sup)
                 await bot.send_message(chat_id=admins[0], text='parsed')
             except Exception as error:
                 await bot.send_message(chat_id=admins[0], text=f'{str(error)}\n{str(error.__traceback__)}')
@@ -172,7 +185,6 @@ async def my_handlerr(message: Message):
         await message.answer(f"Ошибка подписки\n{error}")
 
 
-
 @dp.message(F.text, Command("unsub"))
 async def my_handlers(message: Message):
     try:
@@ -188,8 +200,8 @@ async def my_handlers(message: Message):
         try:
             date = message.text.split(' ')[1]
             name = message.text.split(' ')[2]
-            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
-            response = sup.table("Holidays").insert({"name": name,'date':str(date)}).execute()
+            date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
+            response = sup.table("Holidays").insert({"name": name, 'date': str(date)}).execute()
             await  message.answer(f'holiday set {response}')
         except Exception as err:
             await message.answer(str(err))
@@ -200,7 +212,7 @@ async def my_handlers(message: Message):
     if message.chat.id in admins:
         try:
             date = message.text.split(' ')[1]
-            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
             deleted = []
             deleted.append(sup.table('Zamenas').delete().eq('date', date).execute())
             deleted.append(sup.table('ZamenasFull').delete().eq('date', date).execute())
@@ -215,9 +227,9 @@ async def my_handlers(message: Message):
     if message.chat.id in admins:
         try:
             date = message.text.split(' ')[1]
-            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
             link = message.text.split(' ')[2]
-            parse(link=link,date=date,sup=sup)
+            parse(link=link, date=date, sup=sup)
             await message.answer(f'parsed')
         except Exception as error:
             await message.answer(text=f'{str(error)}\n{traceback.format_exc()}')
@@ -228,7 +240,7 @@ async def my_handlers(message: Message):
     if message.chat.id in admins:
         try:
             date = message.text.split(' ')[1]
-            date = datetime.date( int(date.split('-')[0] ), int(date.split('-')[1]), int(date.split('-')[2]) )
+            date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
             link = message.text.split(' ')[2]
             sup = initSupabase()
             data = Data(sup=sup)
@@ -267,7 +279,7 @@ async def my_handler(message: Message):
     if message.chat.id in admins:
         merge_from = message.text.split()[1]
         merge_to = message.text.split()[2]
-        data = sup.table('Paras').update({'cabinet':merge_to}).eq('cabinet',merge_from).execute()
+        data = sup.table('Paras').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
         print(data)
         count = len(data.data)
         data = sup.table('Zamenas').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
@@ -282,7 +294,7 @@ async def my_handler(message: Message):
     if message.chat.id in admins:
         merge_from = message.text.split()[1]
         merge_to = message.text.split()[2]
-        data = sup.table('Paras').update({'teacher':merge_to}).eq('teacher',merge_from).execute()
+        data = sup.table('Paras').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
         print(data)
         count = len(data.data)
         data = sup.table('Zamenas').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
@@ -305,6 +317,7 @@ async def main() -> None:
     finally:
         scheduler.shutdown()
         await on_exit(bot)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
