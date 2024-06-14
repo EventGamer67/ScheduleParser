@@ -31,3 +31,6 @@ def send_message_to_topic(topic, title, body):
     # Отправка сообщения
     response = messaging.send(message)
     print('Successfully sent message:', response)
+
+
+send_message_to_topic('main', 'Перезалив замен', f"Новые замены")
