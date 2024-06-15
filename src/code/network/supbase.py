@@ -14,6 +14,7 @@ from src.code.models.course_model import Course
 from src.code.models.data_model import Data
 from src.code.models.group_model import Group
 from src.code.models.parsed_date_model import ParsedDate
+from src.code.models.subscriber_model import Subscriber
 from src.code.models.teacher_model import Teacher
 
 
@@ -91,6 +92,12 @@ def addCabinet(name, sup, data):
 def getGroups(sup):
     data, count = sup.table("Groups").select('id', 'name').execute()
     return [Group(item['id'], item['name']) for item in data[1]]
+
+
+def getSubs(sup):
+    data, count = sup.table("MessagingClients").select('*').execute()
+    print(data)
+    return [Subscriber(item['id'] ,item['token']  ,item['clientID'],item['subType'],   item['subID']) for item in data[1]]
 
 
 def getParaNameAndTeacher(para):

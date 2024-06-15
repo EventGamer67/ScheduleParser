@@ -1,6 +1,9 @@
+from typing import List
+
 import firebase_admin
 from firebase_admin import messaging, credentials
 
+from src import getSubs
 
 cred = credentials.Certificate({
     "type": "service_account",
@@ -17,20 +20,28 @@ cred = credentials.Certificate({
 })
 firebase_admin.initialize_app(cred)
 
-# Функция для отправки сообщения в топик
-def send_message_to_topic(topic, title, body):
-    # Создание сообщения
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        topic=topic,
-    )
+def send_message_to_topic(title, body, sup):
+    registration_tokens = getSubs(sup)
 
-    # Отправка сообщения
-    response = messaging.send(message)
-    print('Successfully sent message:', response)
+    webSubs = [sub.token for sub in registration_tokens if sub.clientID == 1]
+    androidSubs = [sub.token for sub in registration_tokens if sub.clientID == 2]
+    print(webSubs)
+    if (len(webSubs) > 0):
+        message = messaging.MulticastMessage(
+            data={'title': title, 'body': body},
+            tokens=webSubs,
+        )
+        response = messaging.send_each_for_multicast(message)
+        print('Successfully sent message web:', response)
+    if (len(androidSubs) > 0):
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            data={'title': title, 'body': body},
+            tokens=androidSubs,
+        )
+        response = messaging.send_each_for_multicast(message)
+        print('Successfully sent message android:', response)
 
-
-send_message_to_topic('main', 'Перезалив замен', f"Новые замены")

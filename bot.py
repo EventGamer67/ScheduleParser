@@ -92,8 +92,8 @@ async def checkNew(bot: Bot):
                             try:
 
                                 await bot.send_media_group(-1002035415883, media=media_group.build())
-                                send_message_to_topic('main', 'Перезалив замен',
-                                                      f'Обнаружен перезалив замен на {i.date}')
+                                send_message_to_topic( 'Перезалив замен',
+                                                      f'Обнаружен перезалив замен на {i.date}',sup=sup)
                             except Exception as error:
                                 await bot.send_message(chat_id=admins[0], text=str(error))
                             subs = await r.lrange("subs", 0, -1)
@@ -140,7 +140,7 @@ async def checkNew(bot: Bot):
                 try:
                     # await bot.send_media_group(chat_id=admins[0], media=media_group.build())
                     await bot.send_media_group(-1002035415883, media=media_group.build())
-                    send_message_to_topic('main', 'Новые замены', f'Новые замены на {zamm.date}')
+                    send_message_to_topic( 'Новые замены', f'Новые замены на {zamm.date}',sup=sup)
                 except Exception as error:
                     await bot.send_message(chat_id=admins[0], text=str(error))
                 subs = await r.lrange("subs", 0, -1)
@@ -170,6 +170,17 @@ async def my_update(messsage: Message):
         await  messsage.reply("Проверяю")
         await checkNew(bot=messsage.bot)
         await messsage.reply("Проверил")
+
+
+@dp.message(F.text, Command("alert"))
+async def my_alert(messsage: Message):
+    if messsage.chat.id in admins:
+        try:
+            send_message_to_topic(messsage.text.split(' ')[1], messsage.text.split(' ')[2], sup=sup)
+            await messsage.reply("Отправил")
+        except Exception as e:
+            await messsage.answer(f"Ошибка \n{e}")
+
 
 
 @dp.message(F.text, Command("sub"))
