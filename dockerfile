@@ -1,11 +1,19 @@
-FROM python:3.11
+# Use a base Python image
+FROM python:3.11-slim
 
+# Set the working directory
 WORKDIR /usr/src/app
 
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y libgl1-mesa-glx
+
+# Install Python dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
 
+# Copy the application code into the container
 COPY . .
 
-CMD [ "python", "./bot.py" ]
+# Specify the command to run your application
+CMD ["python", "./bot.py"]
