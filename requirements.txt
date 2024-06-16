@@ -10,3 +10,4 @@ redis
 PyMuPDF==1.23.15
 supabase==2.2.1
 firebase-admin==6.5.0
+numpy==1.26.3
