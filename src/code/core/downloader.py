@@ -8,6 +8,7 @@ import re
 from pdf2docx import Converter
 import datetime
 from urllib.request import urlopen
+
 from src.code.tools.functions import get_remote_file_hash
 from src.code.models.cabinet_model import Cabinet
 from src.code.models.course_model import Course
@@ -52,9 +53,9 @@ async def create_pdf_screenshots(pdf_path):
 
 
 def parseParas(filename: str, date, sup, data):
-    cv = Converter(f'{filename}.pdf')
-    cv.convert(f'{filename} schedule' + '.docx', start=0, end=None)
-    cv.close()
+    # cv = Converter(f'{filename}.pdf')
+    # cv.convert(f'{filename} schedule' + '.docx', start=0, end=None)
+    # cv.close()
     doc: DocumentType = Document(f'{filename} schedule.docx')
     groups = []
     for i in doc.paragraphs:
@@ -107,9 +108,6 @@ def parseParas(filename: str, date, sup, data):
 
     #temp = es
 
-    for i in temp:
-        print(i)
-
     divided = defineGroups(groups, temp)
 
     for gruppa in divided:
@@ -125,7 +123,6 @@ def parseParas(filename: str, date, sup, data):
         #         print("GERE")
         #         for s in range(12 - len(i)):
         #             i.append('')
-
 
         ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),paras=divided[gruppa], sup=sup, startday=date, data=data)
     pass
@@ -320,6 +317,7 @@ def removeDuplicates(table):
     return cleared
 
 
+
 def ParasGroupToSoup(group, paras, startday, sup, data):
     date = startday
     supabasePARA = []
@@ -332,10 +330,10 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
         paraFriday: str = para[9]
         paraSaturday: str = para[11]
         days = [ParaMonday, paraTuesday, paraWednesday, paraThursday, paraFriday, paraSaturday]
-
         loopindex = 0
         for day in days:
-            aww = supbase.getParaNameAndTeacher(day)
+            aww = supbase.getParaNameAndTeacher(day,data)
+            print(aww)
             if aww is not None:
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
@@ -449,6 +447,10 @@ def get_cabinet_by_id(cabinets : List[Cabinet], target_name :str, sup, data) -> 
     return None
 
 
+def count_matching_characters(str1: str, str2: str) -> int:
+    return sum(1 for char1, char2 in zip(str1, str2) if char1 == char2)
+
+
 def count_different_characters(str1, str2):
     if len(str1) != len(str2):
         return -1
@@ -458,6 +460,37 @@ def count_different_characters(str1, str2):
         if char1 != char2:
             count += 1
     return count
+
+
+def get_teachers_from_string(teachers: List[Teacher], shortName: str) -> List[Teacher]:
+    short_comparer = shortName.replace('.', '').replace(',', '').replace(' ', '').lower().strip()
+    founded = []
+    for teacher in teachers:
+        fio: List[str] = teacher.name.split(' ')
+        if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
+            if short_comparer.__contains__(teacher.name.replace(' ', '').lower().strip()):
+                print(f'Founded by fullfio {short_comparer}')
+                return [teacher]
+            compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
+            if short_comparer.__contains__(compare_result):
+                founded.append(teacher)
+
+    if len(founded) > 0:
+        return founded
+
+    best_match = None
+    max_matches = -1
+
+    for teacher in teachers:
+        fio: List[str] = teacher.name.split(' ')
+        if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
+            compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
+            matches = count_matching_characters(compare_result, short_comparer)
+
+            if matches > max_matches:
+                max_matches = matches
+                best_match = teacher
+    return [best_match] if best_match else []
 
 
 def get_teacher_from_short_name(teachers: List[Teacher], shortName: str):
@@ -485,9 +518,10 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
             if search is not None:
                 return search
     try:
-        supbase.addTeacher(target_name, sup=sup, data=data)
         print(f"want add teacher {target_name}")
-        return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
+        #supbase.addTeacher(target_name, sup=sup, data=data)
+        raise Exception(target_name)
+        #return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
     except:
         return None
 

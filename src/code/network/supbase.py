@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import random
 import re
@@ -8,7 +9,7 @@ import supabase
 from pdf2docx import *
 from supabase import create_client, Client
 from parser_secrets import SUPABASE_URL, SUPABASE_ANON_KEY
-from src.code.core.downloader import parseZamenas
+from src.code.core.downloader import parseZamenas, get_teacher_from_short_name, get_teachers_from_string
 from src.code.models.cabinet_model import Cabinet
 from src.code.models.course_model import Course
 from src.code.models.data_model import Data
@@ -16,6 +17,7 @@ from src.code.models.group_model import Group
 from src.code.models.parsed_date_model import ParsedDate
 from src.code.models.subscriber_model import Subscriber
 from src.code.models.teacher_model import Teacher
+from src.code.tools.logs import logger
 
 
 def initSupabase():
@@ -96,16 +98,26 @@ def getGroups(sup):
 
 def getSubs(sup):
     data, count = sup.table("MessagingClients").select('*').execute()
-    print(data)
     return [Subscriber(item['id'] ,item['token']  ,item['clientID'],item['subType'],   item['subID']) for item in data[1]]
 
 
-def getParaNameAndTeacher(para):
-    if (para != ''):
+def getParaNameAndTeacher(para,data):
+    logger.info(para)
+    if (para != '' and para != None):
         temp = para.replace('\n', ' ').replace('\t', ' ')
         ParaMonday = re.sub(r' {2,}', ' ', temp)
         if (not ParaMonday.__contains__("Резерв")):
-            sample = ParaMonday.split(' ')
+            sample = ParaMonday.replace('.','').replace(' ','').lower()
+            finded_teachers = get_teachers_from_string(teachers=data.TEACHERS,shortName=sample)
+            if len(finded_teachers) == 1:
+                return [finded_teachers[0].name, sample.replace(finded_teachers[0].name.replace(' ','').replace('.','').lower(),'')]
+            if len(finded_teachers) > 1:
+                course_text = sample
+                for i in finded_teachers:
+                    temp = i.name.split(' ')
+                    short_fio = f"{temp[0]}{temp[1][0]}{temp[2][0]}".lower()
+                    course_text = course_text.replace(short_fio, '')
+                return [finded_teachers[0].name,course_text]
             try:
                 prepodMonday = f"{sample[-3]} {sample[-2]} {sample[-1]}"
             except:
@@ -123,6 +135,8 @@ def getParaNameAndTeacher(para):
                 return [prepodMonday, re.sub(r' {2,}', ' ', ParaMonday.replace(prepodMonday, '').strip())]
             else:
                 prepodMonday = ParaMonday.split(' ')[-1]
+        res = [prepodMonday.strip(), ParaMonday.replace(prepodMonday, '').strip()]
+        print(f"RESULT {res}")
         return [prepodMonday.strip(), ParaMonday.replace(prepodMonday, '').strip()]
 
 
