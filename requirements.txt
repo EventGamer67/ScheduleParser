@@ -1,5 +1,6 @@
 supabase==2.2.1
 pdf2docx==0.5.7
+docx2pdf==0.1.8
 typing
 docx
 beautifulsoup4==4.12.2
