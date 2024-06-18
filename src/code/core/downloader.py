@@ -111,13 +111,13 @@ def parseParas(filename: str, date, sup, data):
     divided = defineGroups(groups, temp)
 
     for gruppa in divided:
+
         paras = divided[gruppa]
         divided[gruppa] = removeDuplicates(paras)
         paras = divided[gruppa]
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
         divided[gruppa] = recoverTeachers(paras)
-
         # for i in paras:
         #     if len(i) < 10:
         #         print("GERE")
@@ -266,13 +266,13 @@ def parseZamenas(filename: str, date, sup, data, link:str):
 
     zamenas_supabase = []
     for i in workRows:
+        print(f"zamena {i}")
         zamenas_supabase.append(
             {"group": i[0], 'number': int(i[1]), 'course': i[2], 'teacher': i[3], 'cabinet': i[4], 'date': str(date)})
         pass
 
     full_zamenas_groups = []
     for i in fullzamenagroups:
-        print(i)
         full_zamenas_groups.append({"group": get_group_by_id(target_name=i, data=data, groups=data.GROUPS, sup=sup).id, 'date': str(date)})
         pass
 
@@ -519,9 +519,9 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
                 return search
     try:
         print(f"want add teacher {target_name}")
-        #supbase.addTeacher(target_name, sup=sup, data=data)
-        raise Exception(target_name)
-        #return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
+        supbase.addTeacher(target_name, sup=sup, data=data)
+        #raise Exception(target_name)
+        return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
     except:
         return None
 
