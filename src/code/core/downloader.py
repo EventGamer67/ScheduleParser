@@ -3,28 +3,24 @@ import os
 import urllib
 import fitz
 import requests
-from bs4 import BeautifulSoup
-import re
-from pdf2docx import Converter
 import datetime
+import re
+from bs4 import BeautifulSoup
+from pdf2docx import Converter
+from typing import List
 from urllib.request import urlopen
-
 from src.code.tools.functions import get_remote_file_hash
 from src.code.models.cabinet_model import Cabinet
 from src.code.models.course_model import Course
 from src.code.models.group_model import Group
 from src.code.models.teacher_model import Teacher
 from src.code.models.zamena_table_model import ZamTable
-from src.code.network import supbase
+from src.code.network import supabase_worker
 
 SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
 # SCHEDULE_URL = 'http://127.0.0.1:3000/c:/Users/Danil/Desktop/Uksivt/sample.html'
 
 BASEURL = 'https://www.uksivt.ru/'
-from typing import List
-from docx import Document
-from docx.document import Document as DocumentType
-from docx.table import Table
 
 
 async def save_pixmap(pixmap, screenshot_path):
@@ -62,7 +58,7 @@ def parseParas(filename: str, date, sup, data):
         text = i.text
         if (text.__contains__("Группа - ")):
             filter = text.split(' ')
-            gr = supbase.get_groups_from_string(filter[-1], data=data)[0].name
+            gr = supabase_worker.get_groups_from_string(filter[-1], data=data)[0].name
             groups.append(gr)
 
     # for i in groups:
@@ -133,7 +129,7 @@ def parseZamenas(filename: str, date, sup, data, link:str):
 
     practice_groups: List[Group] = []
     for i in header:
-        practice_groups.extend(supbase.get_groups_from_string(i.text, data=data))
+        practice_groups.extend(supabase_worker.get_groups_from_string(i.text, data=data))
 
     workRows = []
     for i in all_rows:
@@ -281,18 +277,18 @@ def parseZamenas(filename: str, date, sup, data, link:str):
         liquidations.append({"group": i, 'date': str(date)})
         pass
 
-    supbase.addZamenas(sup=sup, zamenas=zamenas_supabase)
+    supabase_worker.addZamenas(sup=sup, zamenas=zamenas_supabase)
     if len(full_zamenas_groups) > 0:
-        supbase.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
+        supabase_worker.addFullZamenaGroups(sup=sup, groups=full_zamenas_groups)
         pass
     if len(practice_supabase) > 0:
-        supbase.add_practices(sup=sup, practices=practice_supabase)
+        supabase_worker.add_practices(sup=sup, practices=practice_supabase)
         pass
     if len(liquidations) > 0:
-        supbase.addLiquidations(sup=sup, liquidations=liquidations)
+        supabase_worker.addLiquidations(sup=sup, liquidations=liquidations)
         pass
     hash = get_remote_file_hash(link)
-    supbase.addNewZamenaFileLink(link,date=date,sup=sup, hash=hash)
+    supabase_worker.addNewZamenaFileLink(link,date=date,sup=sup, hash=hash)
     pass
 
 
@@ -332,7 +328,7 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
         days = [ParaMonday, paraTuesday, paraWednesday, paraThursday, paraFriday, paraSaturday]
         loopindex = 0
         for day in days:
-            aww = supbase.getParaNameAndTeacher(day,data)
+            aww = supabase_worker.getParaNameAndTeacher(day,data)
             print(aww)
             if aww is not None:
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
@@ -440,7 +436,7 @@ def get_cabinet_by_id(cabinets : List[Cabinet], target_name :str, sup, data) -> 
         else:
             continue
     try:
-        supbase.addCabinet(target_name, sup=sup, data=data)
+        supabase_worker.addCabinet(target_name, sup=sup, data=data)
         return get_cabinet_by_id(cabinets=data.CABINETS, target_name=target_name, sup=sup, data=data)
     except:
         return None
@@ -519,7 +515,7 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
                 return search
     try:
         print(f"want add teacher {target_name}")
-        supbase.addTeacher(target_name, sup=sup, data=data)
+        supabase_worker.addTeacher(target_name, sup=sup, data=data)
         #raise Exception(target_name)
         return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
     except:
@@ -534,7 +530,7 @@ def get_group_by_id(groups, target_name, sup, data) -> Group:
             continue
     try:
         print(target_name)
-        supbase.addGroup(target_name.upper(), sup=sup, data=data)
+        supabase_worker.addGroup(target_name.upper(), sup=sup, data=data)
         return get_group_by_id(groups=data.GROUPS, target_name=target_name.upper(), sup=sup, data=data)
     except:
         return None
@@ -548,7 +544,7 @@ def get_course_by_id(courses, target_name, sup, data) -> Course:
         else:
             continue
     try:
-        supbase.addCourse(target_name, sup=sup, data=data)
+        supabase_worker.addCourse(target_name, sup=sup, data=data)
         return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
     except:
         return None
