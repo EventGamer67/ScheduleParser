@@ -26,8 +26,8 @@ def _get_file_stream(link: str) -> BytesIO:
     response = requests.get(link)
 
     if response.status_code == HTTPStatus.OK.value:
-        with BytesIO() as stream:
-            stream.write(response.content)
+        stream = BytesIO()
+        stream.write(response.content)
     else:
         raise Exception("Данные не получены")
     return stream
@@ -48,9 +48,9 @@ def parse(link: str, date_: date):
     match file_type:
         case 'application/pdf':
             cv = Converter(stream=stream, pdf_file='temp')
-            with BytesIO() as stream_converted:
-                cv.convert(stream_converted)
-                cv.close()
+            stream_converted = BytesIO()
+            cv.convert(stream_converted)
+            cv.close()
 
             parseZamenas(stream_converted, date_, data_model, link, supabase_client)
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
