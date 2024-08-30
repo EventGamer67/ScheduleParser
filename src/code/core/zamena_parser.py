@@ -110,7 +110,9 @@ def update_empty_group_column(workRows: list[str]):
         i[0] = re.sub(r'-{2,}', '-', i[0])
 
 def process_multiple_entries(workRows: list[str]):
-    """Handle multiple entries in the same row."""
+    """
+    Выполняет обработку над нескольками строк путём удаления лишних запятых, точек и т.п.
+    """
     editet = []
     for i in workRows:
         try:
@@ -135,7 +137,9 @@ def process_multiple_entries(workRows: list[str]):
     return editet
 
 def map_entities_to_ids(workRows: list, data_model: Data, supabase_client: SupaBaseWorker):
-    """Map group, course, teacher, and cabinet to their respective IDs."""
+    """
+    Применяет функцию к Ids и записывает их в строки workRows
+    """
     for row in workRows:
         group = get_group_by_id(data_model.GROUPS, row[0], data_model, supabase_client)
         if group:
@@ -155,7 +159,9 @@ def map_entities_to_ids(workRows: list, data_model: Data, supabase_client: SupaB
 
 def prepare_and_send_supabase_entries(workRows, practice_groups: list, liquidation: list, fullzamenagroups: list,
                                       date_: date, link, data_model: Data, supabase_client: SupaBaseWorker):
-    """Prepare and send data entries to Supabase."""
+    """
+    Подготовить данные и отправить в БД
+    """
     practice_supabase = [{"group": i.id, 'date': str(date_)} for i in practice_groups]
     zamenas_supabase = [
         {"group": i[0], 'number': int(i[1]), 'course': i[2], 'teacher': i[3], 'cabinet': i[4], 'date': str(date_)}
