@@ -26,9 +26,7 @@ def _get_file_bytes(link: str) -> BytesIO:
     response = requests.get(link)
 
     if response.status_code == HTTPStatus.OK.value:
-        with BytesIO() as stream:
-            stream.write(response.content)
-            data = stream.read()
+        data = response.content
     else:
         raise Exception("Данные не получены")
     return data
