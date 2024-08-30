@@ -47,6 +47,7 @@ def parse(link: str, date_: date):
 
     match file_type:
         case 'application/pdf':
+            stream.seek(0)
             cv = Converter(stream=stream)
             stream_converted = BytesIO()
 
