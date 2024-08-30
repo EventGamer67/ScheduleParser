@@ -22,7 +22,7 @@ class SupaBaseWorker:
         self.client: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     @staticmethod
-    def get_groups_from_string(self, string: str, data_model: Data) -> list[Group]:
+    def get_groups_from_string(string: str, data_model: Data) -> list[Group]:
         """
         Возвращает коллекцию объектов Group на основе поисковой строки и модели
 
@@ -143,7 +143,7 @@ class SupaBaseWorker:
     def addGroup(self, name, data_model: Data):
         client = self.client
         response = client.table("Groups").insert({"name": name, "department": 0}).execute()
-        data_model.GROUPS = self._getGroups(client=client)
+        data_model.GROUPS = self._getGroups()
         print(response)
 
     def addCourse(self, name, data_model: Data):
@@ -151,19 +151,19 @@ class SupaBaseWorker:
         rnd = random.Random()
         color = f'{255},{rnd.randint(0, 255)},{rnd.randint(0, 255)},{rnd.randint(0, 255)}'
         response = client.table("Courses").insert({"name": name, "color": color}).execute()
-        data_model.COURSES = self._getCourses(client=client)
+        data_model.COURSES = self._getCourses()
         print(response)
 
     def addTeacher(self, name, data_model: Data):
         client = self.client
         response = client.table("Teachers").insert({"name": name}).execute()
-        data_model.TEACHERS = self._getTeachers(client=client)
+        data_model.TEACHERS = self._getTeachers()
         print(response)
 
     def addCabinet(self, name, data_model: Data):
         client = self.client
         response = client.table("Cabinets").insert({"name": name}).execute()
-        data_model.CABINETS = self._getCabinets(client=client)
+        data_model.CABINETS = self._getCabinets()
         print(response)
 
     def _getGroups(self):
