@@ -168,27 +168,27 @@ class SupaBaseWorker:
 
     def _getGroups(self):
         client = self.client
-        data_model = client.table("Groups").select('id', 'name').execute()
-        return [Group(item['id'], item['name']) for item in data_model[1]]
+        data, _ = client.table("Groups").select('id', 'name').execute()
+        return [Group(item['id'], item['name']) for item in data[1]]
 
     def _getSubs(self):
         client = self.client
-        data_model = client.table("MessagingClients").select('*').execute()
-        return [Subscriber(item['id'], item['token'], item['clientID'], item['subType'], item['subID']) for item in data_model[1]]
+        data, _ = client.table("MessagingClients").select('*').execute()
+        return [Subscriber(item['id'], item['token'], item['clientID'], item['subType'], item['subID']) for item in data[1]]
 
     def _getTeachers(self):
         client = self.client
-        data_model = client.table("Teachers").select('id', 'name').execute()
-        return [Teacher(item['id'], item['name']) for item in data_model[1]]
+        data, _ = client.table("Teachers").select('id', 'name').execute()
+        return [Teacher(item['id'], item['name']) for item in data[1]]
 
 
     def _getCabinets(self):
         client = self.client
-        data_model = client.table("Cabinets").select('id', 'name').execute()
-        return [Cabinet(item['id'], item['name']) for item in data_model[1]]
+        data, _ = client.table("Cabinets").select('id', 'name').execute()
+        return [Cabinet(item['id'], item['name']) for item in data[1]]
 
 
     def _getCourses(self):
         client = self.client
-        data_model = client.table("Courses").select('id', 'name').execute()
-        return [Course(item['id'], item['name']) for item in data_model[1]]
+        data, _ = client.table("Courses").select('id', 'name').execute()
+        return [Course(item['id'], item['name']) for item in data[1]]
