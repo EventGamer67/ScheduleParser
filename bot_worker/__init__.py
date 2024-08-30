@@ -22,15 +22,16 @@ def _init_date_model() -> Data:
     return data_model
 
 
-def _get_file_stream(link: str) -> BytesIO:
+def _get_file_bytes(link: str) -> BytesIO:
     response = requests.get(link)
 
     if response.status_code == HTTPStatus.OK.value:
         with BytesIO() as stream:
             stream.write(response.content)
+            data = stream.read()
     else:
         raise Exception("Данные не получены")
-    return stream
+    return data
 
 def _define_file_format(data: bytes):
     mime = magic.Magic(mime=True)
@@ -40,12 +41,12 @@ def _define_file_format(data: bytes):
 
 def parse(link: str, date_: date):
     data_model = _init_date_model()
-    stream = _get_file_stream(link=link)
-    file_type = _define_file_format(stream.read())
+    data = _get_file_bytes(link=link)
+    file_type = _define_file_format(data)
 
     match file_type:
         case 'application/pdf':
-            cv = Converter(stream.read())
+            cv = Converter(data)
             stream_converted = BytesIO()
 
             cv.convert(stream_converted)
@@ -53,4 +54,4 @@ def parse(link: str, date_: date):
 
             parseZamenas(stream_converted, date_, data_model, link)
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            parseZamenas(stream, date_, data_model, link)
+            parseZamenas(BytesIO().write(data), date_, data_model, link)
