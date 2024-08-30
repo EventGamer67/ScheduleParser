@@ -43,7 +43,7 @@ def _define_file_format(stream: BytesIO):
 def parse(link: str, date_: date):
     data_model = _init_date_model()
     stream = _get_file_stream(link=link)
-    file_type = _define_file_format(stream)
+    file_type = _define_file_format(stream=stream)
 
     match file_type:
         case 'application/pdf':
