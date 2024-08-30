@@ -1,11 +1,12 @@
 import asyncio
 import os
 import urllib
-import fitz
+from fitz import *
 import requests
 import datetime
 import re
 from bs4 import BeautifulSoup
+from fitz.table import Table
 from pdf2docx import Converter
 from typing import List
 from urllib.request import urlopen
@@ -46,6 +47,15 @@ async def create_pdf_screenshots(pdf_path):
         await save_pixmap(pix, screenshot_path)
         screenshot_paths.append(screenshot_path)
     return screenshot_paths
+
+
+def parse_teacher_schedule():
+    # cv = Converter(f'test.pdf')
+    # cv.convert(f'test' + '.docx')
+    # cv.close()
+    doc = Document('test.docx')
+    for i in doc.paragraphs:
+        print(i.text)
 
 
 def parseParas(filename: str, date, sup, data):

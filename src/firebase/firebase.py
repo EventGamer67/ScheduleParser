@@ -20,27 +20,27 @@ cred = credentials.Certificate({
 })
 firebase_admin.initialize_app(cred)
 
+
 def send_message_to_topic(title, body, sup):
     registration_tokens = getSubs(sup)
 
-    webSubs = [sub.token for sub in registration_tokens if sub.clientID == 1]
-    androidSubs = [sub.token for sub in registration_tokens if sub.clientID == 2]
-    print(webSubs)
-    if (len(webSubs) > 0):
+    web_subs = [sub.token for sub in registration_tokens if sub.clientID == 1]
+    android_subs = [sub.token for sub in registration_tokens if sub.clientID == 2]
+    if len(web_subs) > 0:
         message = messaging.MulticastMessage(
             data={'title': title, 'body': body},
-            tokens=webSubs,
+            tokens=web_subs,
         )
         response = messaging.send_each_for_multicast(message)
         print('Successfully sent message web:', response)
-    if (len(androidSubs) > 0):
+    if len(android_subs) > 0:
         message = messaging.MulticastMessage(
             notification=messaging.Notification(
                 title=title,
                 body=body,
             ),
             data={'title': title, 'body': body},
-            tokens=androidSubs,
+            tokens=android_subs,
         )
         response = messaging.send_each_for_multicast(message)
         print('Successfully sent message android:', response)
