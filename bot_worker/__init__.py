@@ -26,15 +26,14 @@ def _get_file_stream(link: str) -> BytesIO:
     response = requests.get(link)
 
     if response.status_code == HTTPStatus.OK.value:
-        stream = BytesIO()
-        stream.write(response.content)
+        with BytesIO() as stream:
+            stream.write(response.content)
     else:
         raise Exception("Данные не получены")
     return stream
 
 def _define_file_format(stream: BytesIO):
-    stream.seek(0)
-    data = stream.read()
+    data = stream.getvalue()
     mime = magic.Magic(mime=True)
     file_type = mime.from_buffer(data)
 
@@ -47,7 +46,6 @@ def parse(link: str, date_: date):
 
     match file_type:
         case 'application/pdf':
-            stream.seek(0)
             cv = Converter(stream=stream)
             stream_converted = BytesIO()
 
