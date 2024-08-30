@@ -9,7 +9,7 @@ from io import BytesIO
 from http import HTTPStatus
 from datetime import date
 from pdf2docx import Converter
-from src.code.core.parser import parseZamenas
+from src.code.core.zamena_parser import parseZamenas
 from src.code.network.supabase_worker import SupaBaseWorker
 from src.code.models.data_model import Data
 
@@ -18,7 +18,7 @@ def _init_date_model() -> Data:
     data_model = Data
     supabase_client = SupaBaseWorker()
 
-    data_model.GROUPS, _, data_model.CABINETS, data_model.TEACHERS, _, data_model.COURSES = supabase_client.get_data_models_list
+    data_model.GROUPS, _, data_model.TEACHERS, data_model.CABINETS, data_model.COURSES = supabase_client.get_data_models_list
     return data_model
 
 
