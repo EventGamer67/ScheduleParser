@@ -19,29 +19,57 @@ from io import BytesIO
 import datetime
 
 
-def getParaNameAndTeacher(para: str, data_model: Data) -> None | list[str]:
+def getParaNameAndTeacher(para: str, data_model: Data, supabase_worker: supabase_worker.SupaBaseWorker) -> None | list[str]:
     if not para:
         return None
 
-    temp = para.replace('\n', ' ').replace('\t', ' ')
+    cell_text = para.replace('\n', ' ').replace('\t', ' ')
+    cell_text = re.sub(r' {2,}', ' ', cell_text)
     
-    ParaMonday = re.sub(r' {2,}', ' ', temp)
+    #в ячейке одно слово
+    if len(cell_text.strip().split(' ')) == 1:
+        print(f"ЧТО ЗА ХУЙНЯ {cell_text}")
+        finded_teachers = get_teachers_from_string(teachers=data_model.TEACHERS, shortName=cell_text)
+        if finded_teachers is None:
+            return ["", cell_text]
 
-    print(f"para {ParaMonday}")
-
-    if "Резерв" in ParaMonday:
-        return _handle_reserved(ParaMonday)
-
-    sample = ParaMonday.replace('.', '').replace(' ', '').lower()
+    sample = cell_text.replace('.', '').replace(' ', '').lower()
+    
     finded_teachers = get_teachers_from_string(teachers=data_model.TEACHERS, shortName=sample)
+    
+    
+    
+    if finded_teachers is None:
+        
+        founded_raw = get_teacher_from_synonyms_in_raw_text(teachers=data_model.TEACHERS,search_text=cell_text)
+        if founded_raw[0] is not None:
+            return [founded_raw[0], cell_text.replace(founded_raw[1],'').strip()]
+        
+        
+        search_text: str = cell_text.strip().split(' ')
+        for element in search_text:
+            founded_course : Course | None = supabase_worker.get_course_from_synonyms(element,courses=data_model.COURSES)
+            if founded_course is not None:
+                teacher = cell_text.replace(founded_course.name,'').strip()
+                accurate_teacher = supabase_worker.get_teacher_from_synonyms(search_text=teacher,teachers=data_model.TEACHERS)
+                if accurate_teacher is None:
+                    return [teacher,founded_course.name]
+                return [accurate_teacher.name, founded_course.name]
 
-    if len(finded_teachers) == 1:
-        return [finded_teachers[0].name, _clean_teacher_name(sample, finded_teachers[0].name)]
+    
+    else:
+        if len(finded_teachers) == 1:
+            return [finded_teachers[0].name, _clean_teacher_name(sample, finded_teachers[0].name)]
 
-    if len(finded_teachers) > 1:
-        return _handle_multiple_teachers(finded_teachers, sample)
+    # if len(finded_teachers) > 1:
+    #     return _handle_multiple_teachers(finded_teachers, sample)
 
-    return _handle_excpetions_teacher(sample, ParaMonday)
+    if "Резерв" in cell_text:
+        print("see reserveed")
+        return _handle_reserved(cell_text)
+
+
+    return _handle_excpetions_teacher(sample, cell_text)
 
 
 def _clean_teacher_name(sample: str, teacher_name: str):
@@ -107,6 +135,11 @@ def removeDuplicates(table):
 
 def recoverTeachers(table):
     aww = 0
+    print("------before------")
+    for i in table:
+        if len(i) < 5 and i[0] != '':
+            table.remove(i)
+    print("------before------")
     for row in table:
         if (row[0] == ''):
             if (len(row[1].split(' ')) > 2):
@@ -128,18 +161,26 @@ def recoverTeachers(table):
                 text = table[aww - 1][11]
                 table[aww - 1][11] = text + " \n" + row[11]
             table.remove(row)
+        else:
+            # if()
+            pass
         aww += 1
     return table
 
 
 def defineGroups(groups, table):
+    print(groups)
     groupIndex = -1
     groupParas = []
     group = groups[0]
     divided = {}
     for row in table:
+        print(group)
+        print(divided.get(group))
         if (row[0] == '№'):
+            print(row)
             try:
+                print(group)
                 divided[group] = groupParas
                 groupIndex = groupIndex + 1
                 group = groups[groupIndex]
@@ -152,6 +193,7 @@ def defineGroups(groups, table):
     else:
         divided[group] = groupParas
         pass
+    raise Exception("a")
     return divided
 
 
@@ -216,6 +258,14 @@ def count_different_characters(str1, str2):
     return count
 
 
+def get_teacher_from_synonyms_in_raw_text(teachers: List[Teacher], search_text: str):
+    for i in teachers:
+        for syn in i.synonyms:
+            if search_text.__contains__(syn):
+                return (i.name,syn)
+    return (None,None)
+
+
 def get_teachers_from_string(teachers: List[Teacher], shortName: str) -> List[Teacher]:
     short_comparer = shortName.replace('.', '').replace(',', '').replace(' ', '').lower().strip()
     founded = []
@@ -223,28 +273,28 @@ def get_teachers_from_string(teachers: List[Teacher], shortName: str) -> List[Te
         fio: List[str] = teacher.name.split(' ')
         if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
             if short_comparer.__contains__(teacher.name.replace(' ', '').lower().strip()):
-                print(f'Founded by fullfio {short_comparer}')
                 return [teacher]
             compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
             if short_comparer.__contains__(compare_result):
                 founded.append(teacher)
 
-    if len(founded) > 0:
-        return founded
+    # if len(founded) > 0:
+        
+    return None
 
-    best_match = None
-    max_matches = -1
+    # best_match = None
+    # max_matches = -1
 
-    for teacher in teachers:
-        fio: List[str] = teacher.name.split(' ')
-        if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
-            compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
-            matches = count_matching_characters(compare_result, short_comparer)
+    # for teacher in teachers:
+    #     fio: List[str] = teacher.name.split(' ')
+    #     if len(fio) > 2 and fio[0].strip() != '' and fio[1].strip() != '' and fio[2].strip() != '':
+    #         compare_result = f"{fio[0]}{fio[1][0]}{fio[2][0]}".lower().strip()
+    #         matches = count_matching_characters(compare_result, short_comparer)
 
-            if matches > max_matches:
-                max_matches = matches
-                best_match = teacher
-    return [best_match] if best_match else []
+    #         if matches > max_matches:
+    #             max_matches = matches
+    #             best_match = teacher
+    # return [best_match] if best_match else []
 
 
 def get_teacher_from_short_name(teachers: List[Teacher], shortName: str):
@@ -277,7 +327,7 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
     return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
 
 
-def get_group_by_id(groups, target_name, sup, data) -> Group:
+def get_group_by_id(groups, target_name, supabase_worker, data) -> Group:
     for group in groups:
         if group.name.upper() == target_name.replace('_','-').upper():
             return group
@@ -289,15 +339,18 @@ def get_group_by_id(groups, target_name, sup, data) -> Group:
     return None
 
 
-def get_course_by_id(courses, target_name, sup, data) -> Course:
+def get_course_by_id(courses, target_name, sup: supabase_worker.SupaBaseWorker, data) -> Course:
     for course in courses:
-        if course.name == target_name:
+        if course.name == target_name.lower():
             return course
         else:
             continue
+    founded_course: Course | None = sup.get_course_from_synonyms(target_name,courses=data.COURSES)
+    if founded_course is None:
+        raise Exception(target_name)
+        #return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
         #supabase_worker.addCourse(target_name, sup=sup, data=data)
-    raise Exception(target_name)
-    return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
+    return founded_course
 
 
 def extract_all_tables_to_rows(tables: List[Table]) -> List[List[str]]:
@@ -531,7 +584,7 @@ def getLatestSchedleFile():
     return urls[-1]
 
 
-def ParasGroupToSoup(group, paras, startday, sup: supabase_worker.SupaBaseWorker, data):
+def ParasGroupToSoup(group, paras, startday, supabase_worker: supabase_worker.SupaBaseWorker, data):
     date = startday
     supabasePARA = []
     for para in paras:
@@ -545,12 +598,11 @@ def ParasGroupToSoup(group, paras, startday, sup: supabase_worker.SupaBaseWorker
         days = [ParaMonday, paraTuesday, paraWednesday, paraThursday, paraFriday, paraSaturday]
         loopindex = 0
         for day in days:
-            aww = getParaNameAndTeacher(day,data)
-            print(f"getParaNameAndTeacher {aww}")
+            aww = getParaNameAndTeacher(day,data, supabase_worker=supabase_worker)
             if aww is not None:
-                teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
-                course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
-                cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
+                teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=supabase_worker, data=data)
+                course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=supabase_worker, data=data)
+                cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=supabase_worker,
                                             data=data)
                 if (teacher is not None and course is not None and cabinet is not None):
                     supabasePARA.append(
@@ -560,7 +612,7 @@ def ParasGroupToSoup(group, paras, startday, sup: supabase_worker.SupaBaseWorker
             loopindex = loopindex + 1
 
             pass
-    #sup.table('Paras').insert(supabasePARA).execute()
+    # supabase_worker.client.table('Paras').insert(supabasePARA).execute()
     pass
 
 
@@ -624,7 +676,6 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
     #temp = es
 
     divided = defineGroups(groups, temp)
-
     for gruppa in divided:
 
         paras = divided[gruppa]
@@ -632,13 +683,13 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
         paras = divided[gruppa]
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
+        print(gruppa)
         divided[gruppa] = recoverTeachers(paras)
         # for i in paras:
         #     if len(i) < 10:
         #         print("GERE")
         #         for s in range(12 - len(i)):
         #             i.append('')
-        sup = supabase_worker.client
-        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, sup=sup, data=data),paras=divided[gruppa], sup=sup, startday=date, data=data)
+        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, supabase_worker=supabase_worker, data=data),paras=divided[gruppa], supabase_worker=supabase_worker, startday=date, data=data)
     pass
 

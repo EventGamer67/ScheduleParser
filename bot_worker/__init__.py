@@ -74,3 +74,4 @@ def parse_schedule(link: str, date_: date):
             parseParas(date=date_,supabase_worker=supabase_client,data=data_model,stream=stream_converted)
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
             parseParas(date=date_,supabase_worker=supabase_client,data=data_model,stream=stream)
+            pass

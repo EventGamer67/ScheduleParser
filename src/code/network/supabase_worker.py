@@ -178,8 +178,8 @@ class SupaBaseWorker:
 
     def _getTeachers(self):
         client = self.client
-        data, _ = client.table("Teachers").select('id', 'name').execute()
-        return [Teacher(item['id'], item['name']) for item in data[1]]
+        data, _ = client.table("Teachers").select('id', 'name','synonyms').execute()
+        return [Teacher(item['id'], item['name'],item['synonyms']) for item in data[1]]
 
 
     def _getCabinets(self):
@@ -190,5 +190,26 @@ class SupaBaseWorker:
 
     def _getCourses(self):
         client = self.client
-        data, _ = client.table("Courses").select('id', 'name').execute()
-        return [Course(item['id'], item['name']) for item in data[1]]
+        data, _ = client.table("Courses").select('id', 'name','synonyms').execute()
+        return [Course(item['id'], item['name'],item['synonyms']) for item in data[1]]
+    
+    
+    def get_course_from_synonyms(self,search_text: str, courses: List[Course]) -> Course:
+        for i in courses:
+            for syn in i.synonyms:
+                if search_text.lower().__contains__(syn.lower()):
+                    return i
+        return None
+        # client = self.client
+        # data, _ = client.table("Courses").select('name').contains("synonyms",[search_text]).execute()
+        # if len(data[1]) == 0:
+        #     return None
+        # return data[1][0]["name"]
+    
+    
+    def get_teacher_from_synonyms(self,search_text, teachers: List[Teacher]) -> Teacher:
+        for i in teachers:
+            for syn in i.synonyms:
+                if search_text.lower().__contains__(syn.lower()):
+                    return i
+        return None
