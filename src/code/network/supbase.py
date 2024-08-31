@@ -26,11 +26,19 @@ def initSupabase():
     return supabase
 
 
-def get_groups_from_string(string: str, data: Data) -> List[Group]:
+def addGroup(name, sup, data):
+    response = sup.table("Groups").insert({"name": name, "department": 0}).execute()
+    data.GROUPS = getGroups(sup=sup)
+    print(response)
+
+
+def get_groups_from_string(string: str, data: Data,sup) -> List[Group]:
     groups = []
     for gr in data.GROUPS:
         if (string.lower().strip().__contains__(gr.name.lower().strip())):
             groups.append(gr)
+    if len(groups) == 0:
+        addGroup(string,sup,data)
     return groups
 
 
@@ -65,10 +73,7 @@ def get_zamena_file_links() -> List[ParsedDate]:
     return parsed_days
 
 
-def addGroup(name, sup, data):
-    response = sup.table("Groups").insert({"name": name, "department": 0}).execute()
-    data.GROUPS = getGroups(sup=sup)
-    print(response)
+
 
 
 def addCourse(name, sup, data):

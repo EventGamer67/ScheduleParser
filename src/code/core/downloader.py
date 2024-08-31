@@ -62,7 +62,9 @@ def parseParas(filename: str, date, sup, data):
         text = i.text
         if (text.__contains__("Группа - ")):
             filter = text.split(' ')
-            gr = supbase.get_groups_from_string(filter[-1], data=data)[0].name
+            print(filter)
+            print(supbase.get_groups_from_string(filter[-1], data=data,sup=sup))
+            gr = supbase.get_groups_from_string(filter[-1], data=data,sup=sup)[0].name
             groups.append(gr)
 
     # for i in groups:
@@ -335,6 +337,7 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
             aww = supbase.getParaNameAndTeacher(day,data)
             print(aww)
             if aww is not None:
+                print(aww[1])
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=sup, data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=sup, data=data)
                 cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=sup,
@@ -347,7 +350,7 @@ def ParasGroupToSoup(group, paras, startday, sup, data):
             loopindex = loopindex + 1
 
             pass
-    sup.table('Paras').insert(supabasePARA).execute()
+    # sup.table('Paras').insert(supabasePARA).execute()
     pass
 
 
