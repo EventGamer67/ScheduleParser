@@ -5,11 +5,10 @@ class Data:
     TEACHERS = []
     COURSES = []
     def __init__(self,sup):
-        from src import getGroups, getCabinets, getTeachers, getCourses
-        self.GROUPS = getGroups(sup=sup)
-        self.CABINETS = getCabinets(sup=sup)
-        self.TEACHERS = getTeachers(sup=sup)
-        self.COURSES = getCourses(sup=sup)
+        self.GROUPS =  sup._getGroups()
+        self.CABINETS = sup._getCabinets()
+        self.TEACHERS = sup._getTeachers()
+        self.COURSES = sup._getCourses()
 
 
 class DataMock(Data):

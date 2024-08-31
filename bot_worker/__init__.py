@@ -9,6 +9,7 @@ from io import BytesIO
 from http import HTTPStatus
 from datetime import date
 from pdf2docx import Converter
+from src.code.core.schedule_parser import parseParas
 from src.code.core.zamena_parser import parseZamenas
 from src.code.network.supabase_worker import SupaBaseWorker
 from src.code.models.data_model import Data
@@ -55,3 +56,21 @@ def parse(link: str, date_: date):
             parseZamenas(stream_converted, date_, data_model, link, supabase_client)
         case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
             parseZamenas(stream, date_, data_model, link, supabase_client)
+
+
+def parse_schedule(link: str, date_: date):
+    supabase_client = SupaBaseWorker()
+    data_model = _init_date_model()
+    stream = _get_file_stream(link=link)
+    file_type = _define_file_format(stream)
+
+    match file_type:
+        case 'application/pdf':
+            # cv = Converter(stream=stream, pdf_file='temp')
+            stream_converted = BytesIO()
+            # cv.convert(stream_converted)
+            # cv.close()
+
+            parseParas(date=date_,supabase_worker=supabase_client,data=data_model,stream=stream_converted)
+        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            parseParas(date=date_,supabase_worker=supabase_client,data=data_model,stream=stream)
