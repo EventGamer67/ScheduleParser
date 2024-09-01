@@ -135,11 +135,9 @@ def removeDuplicates(table):
 
 def recoverTeachers(table):
     aww = 0
-    print("------before------")
-    for i in table:
-        if len(i) < 5 and i[0] != '':
-            table.remove(i)
-    print("------before------")
+    # for i in table:
+    #     if len(i) < 5 and i[0] != '':
+    #         table.remove(i)
     for row in table:
         if (row[0] == ''):
             if (len(row[1].split(' ')) > 2):
@@ -675,6 +673,10 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
 
     #temp = es
 
+    old = []
+    for i in temp:
+        print(i)
+
     divided = defineGroups(groups, temp)
     for gruppa in divided:
 
@@ -683,7 +685,6 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
         paras = divided[gruppa]
         divided[gruppa] = removeDoubleRows(paras)
         paras = divided[gruppa]
-        print(gruppa)
         divided[gruppa] = recoverTeachers(paras)
         # for i in paras:
         #     if len(i) < 10:
