@@ -11,7 +11,7 @@ redis~=5.0.8
 PyMuPDF
 supabase
 firebase-admin
-numpy==2.1.0
+numpy==2.1.1
 hpack~=4.0.0
 hyperframe~=6.0.1
 h2~=4.1.0
