@@ -31,6 +31,7 @@ def parseZamenas(stream: BytesIO, date_: date, data_model: Data, link:str, supab
     workRows = process_multiple_entries(workRows)
 
     map_entities_to_ids(workRows, data_model, supabase_client)
+
     prepare_and_send_supabase_entries(workRows, practice_groups, liquidation, fullzamenagroups,
                                       date_, link, data_model, supabase_client)
 
@@ -69,14 +70,19 @@ def handle_special_cases(workRows: list[str], data_model: Data):
     liquidation = list()
     fullzamenagroups = list()
 
+    #set group name in zamena group rows
     for i in workRows:
         iteration += 1
         if i[0] == '':
             i[0] = workRows[iteration - 2][0]
 
-    for i in workRows[:]:
-        if i[0] == i[1] and i[2] == i[3]:
-            if "ликвидация" in i[0].strip().lower():
+    #Find full zamena groups
+    for i in workRows:
+        if i[0] != '' and len(set(i)) == 1:
+            if "ликвидация" not in i[0].strip().lower():
+                fullzamenagroups.append(i[0].strip().replace(' ',''))
+                workRows.remove(i)
+            else:
                 try:
                     sample = i[0].strip().lower()
                     for gr in data_model.GROUPS:
@@ -87,26 +93,48 @@ def handle_special_cases(workRows: list[str], data_model: Data):
                     print(err)
                     continue
                 workRows.remove(i)
-            workRows.remove(i)
 
-    for i in workRows[:]:
-        i.pop(2)
-        i.pop(2)
-        if all(cell == '' for cell in i[1:]):
-            workRows.remove(i)
-        elif len(set(i)) == 1:
-            fullzamenagroups.append(i[0].strip().replace(' ', ""))
-            workRows.remove(i)
+
+    # for i in workRows[:]:
+    #     if i[0] == i[1] and i[2] == i[3]:
+    #         if "ликвидация" in i[0].strip().lower():
+    #             try:
+    #                 sample = i[0].strip().lower()
+    #                 for gr in data_model.GROUPS:
+    #                     if (gr.name.lower().strip() in sample):
+    #                         liquidation.append(gr.id)
+    #                         print(f"Ликвидация {gr.name}")
+    #             except Exception as err:
+    #                 print(err)
+    #                 continue
+    #             workRows.remove(i)
+    #         workRows.remove(i)
+
+
+    print(20*"*")
+    for i in workRows:
+        print(i)
+
+    print(20 * "*")
+
+    # for i in workRows[:]:
+    #     i.pop(2)
+    #     i.pop(2)
+    #     if all(cell == '' for cell in i[1:]):
+    #         workRows.remove(i)
+    #     elif len(set(i)) == 1:
+    #         fullzamenagroups.append(i[0].strip().replace(' ', ""))
+    #         workRows.remove(i)
 
     return workRows, fullzamenagroups, liquidation
 
 
 def update_empty_group_column(workRows: list[str]):
     """
-    Метод удаляет лишние тире, пробелы, запятые, точки и приводит к uppercase
+    Метод удаляет лишние тире, пробелы, запятые, точки и приводит к lowercase
     """
     for i in workRows:
-        i[0] = i[0].replace(' ', '').replace(',', '').replace('.', '').upper()
+        i[0] = i[0].replace(' ', '').replace(',', '').replace('.', '').lower()
         i[0] = re.sub(r'-{2,}', '-', i[0])
 
 def process_multiple_entries(workRows: list[str]):
@@ -153,9 +181,17 @@ def map_entities_to_ids(workRows: list, data_model: Data, supabase_client: SupaB
         if teacher:
             row[3] = teacher.id
 
-        cabinet = get_cabinet_by_id(data_model.CABINETS, row[4], data_model, supabase_client)
+        course = get_course_by_id(data_model.COURSES, row[4], data_model, supabase_client)
+        if course:
+            row[4] = course.id
+
+        teacher = get_teacher_by_id(data_model.TEACHERS, row[5], data_model, supabase_client)
+        if teacher:
+            row[5] = teacher.id
+
+        cabinet = get_cabinet_by_id(data_model.CABINETS, row[6], data_model, supabase_client)
         if cabinet:
-            row[4] = cabinet.id
+            row[6] = cabinet.id
 
 def prepare_and_send_supabase_entries(workRows, practice_groups: list, liquidation: list, fullzamenagroups: list,
                                       date_: date, link, data_model: Data, supabase_client: SupaBaseWorker):
@@ -164,7 +200,7 @@ def prepare_and_send_supabase_entries(workRows, practice_groups: list, liquidati
     """
     practice_supabase = [{"group": i.id, 'date': str(date_)} for i in practice_groups]
     zamenas_supabase = [
-        {"group": i[0], 'number': int(i[1]), 'course': i[2], 'teacher': i[3], 'cabinet': i[4], 'date': str(date_)}
+        {"group": i[0], 'number': int(i[1]), 'course': i[4], 'teacher': i[5], 'cabinet': i[6], 'date': str(date_)}
         for i in workRows
     ]
     full_zamenas_groups = [
@@ -237,12 +273,12 @@ def removeDemoExam(rows):
 
 
 def find_entity_by_name(entities, target_name, name_key='name', normalize_func=None):
-    target_name_normalized = target_name.upper()
+    target_name_normalized = str(target_name).lower()
     if normalize_func:
         target_name_normalized = normalize_func(target_name_normalized)
 
     for entity in entities:
-        entity_name_normalized = getattr(entity, name_key).upper()
+        entity_name_normalized = getattr(entity, name_key).lower()
         if entity_name_normalized == target_name_normalized:
             return entity
     return None
@@ -252,8 +288,8 @@ def add_and_get_entity(entity_type, add_func, entities, target_name, data_model)
     entity = find_entity_by_name(entities, target_name)
     if entity:
         return entity
-
     try:
+        #raise Exception(f"not found {target_name}")
         add_func(target_name, data_model=data_model)
         entities = getattr(data_model, entity_type)
         return find_entity_by_name(entities, target_name)
@@ -267,7 +303,7 @@ def get_group_by_id(groups, target_name, data_model: Data, supabase_client: Supa
         entity_type='GROUPS',
         add_func=supabase_client.addGroup,
         entities=groups,
-        target_name=target_name.replace('_', '-').upper(),
+        target_name=target_name.replace('_', '-').lower(),
         data_model=data_model
     )
 

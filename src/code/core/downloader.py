@@ -1,13 +1,12 @@
-# import asyncio
-# import os
-# import urllib
-# import docx.shared
-# import fitz
-# import requests
-# import re
-# from pdf2docx import Converter
-# from urllib.request import urlopen
-# from src.code.tools.functions import get_remote_file_hash
+import asyncio
+import os
+import urllib
+import docx.shared
+import fitz
+import requests
+import re
+from pdf2docx import Converter
+from urllib.request import urlopen
 
 
 # SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
@@ -16,29 +15,29 @@
 # BASEURL = 'https://www.uksivt.ru/'
 
 
-# async def save_pixmap(pixmap, screenshot_path):
-#     loop = asyncio.get_event_loop()
-#     await loop.run_in_executor(None, pixmap.save, screenshot_path, "png")
+async def save_pixmap(pixmap, screenshot_path):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, pixmap.save, screenshot_path, "png")
 
 
-# def cleanup_temp_files(file_paths):
-#     for file_path in file_paths:
-#         os.remove(file_path)
+def cleanup_temp_files(file_paths):
+    for file_path in file_paths:
+        os.remove(file_path)
 
 
-# async def create_pdf_screenshots(pdf_path):
-#     screenshot_paths = []
-#     pdf_document: fitz.Document = fitz.open(f"{pdf_path}.pdf")
-#     for i in range(pdf_document.page_count):
-#         page: fitz.Page = pdf_document.load_page(i)
-#         zoom_x = 1.5  # horizontal zoom
-#         zoom_y = 1.5  # vertical zoom
-#         mat = fitz.Matrix(zoom_x, zoom_y)
-#         pix: fitz.Pixmap = page.get_pixmap(matrix=mat)
-#         screenshot_path = f'{pdf_path}_page_{i + 1}.png'
-#         await save_pixmap(pix, screenshot_path)
-#         screenshot_paths.append(screenshot_path)
-#     return screenshot_paths
+async def create_pdf_screenshots(pdf_path):
+    screenshot_paths = []
+    pdf_document: fitz.Document = fitz.open(f"{pdf_path}.pdf")
+    for i in range(pdf_document.page_count):
+        page: fitz.Page = pdf_document.load_page(i)
+        zoom_x = 1.5  # horizontal zoom
+        zoom_y = 1.5  # vertical zoom
+        mat = fitz.Matrix(zoom_x, zoom_y)
+        pix: fitz.Pixmap = page.get_pixmap(matrix=mat)
+        screenshot_path = f'{pdf_path}_page_{i + 1}.png'
+        await save_pixmap(pix, screenshot_path)
+        screenshot_paths.append(screenshot_path)
+    return screenshot_paths
 
 
 # def parse_teacher_schedule():

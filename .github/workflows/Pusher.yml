@@ -1,46 +1,46 @@
-name: Pusher
-
-on:
-  push:
-    branches:
-      - dev
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Build Docker image
-        run: docker build -t eventgamer67/my-schedule .
-
-      - name: Login to Docker Hub
-        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-
-      - name: Push Docker image
-        run: docker push eventgamer67/my-schedule
-
-      - name: SSH into remote server and update container
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker pull eventgamer67/my-schedule
-            docker stop my-schedule-container || true
-            docker rm my-schedule-container || true
-            docker rmi eventgamer67/my-schedule || true
-            docker run -d \
-              --name my-schedule-container \
-              -e SCHEDULER_PARSER_TELEGRAM_TOKEN='5261332325:AAHnbJNzHfwtci6jXc_7Y1mGJJ5wfo0tXQo' \
-              -e SCHEDULER_SUPABASE_URL='https://ojbsikxdqcbuvamygezd.supabase.co' \
-              -e SCHEDULER_SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw' \
-              -e SCHEDULER_REDIS_HOST_URL='monorail.proxy.rlwy.net' \
-              -e SCHEDULER_REDIS_PORT='13877' \
-              -e SCHEDULER_REDIS_PASSWORD='BNFODHMBEaF3fdNd4akOD2CPg5HgEMla' \
-              -e SCHEDULER_REDIS_USERNAME='default' \
-              eventgamer67/my-schedule \
-              python ./bot.py parser
+#name: Pusher
+#
+#on:
+#  push:
+#    branches:
+#      - dev
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#
+#      - name: Build Docker image
+#        run: docker build -t eventgamer67/my-schedule .
+#
+#      - name: Login to Docker Hub
+#        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+#
+#      - name: Push Docker image
+#        run: docker push eventgamer67/my-schedule
+#
+#      - name: SSH into remote server and update container
+#        uses: appleboy/ssh-action@master
+#        with:
+#          host: ${{ secrets.SSH_HOST }}
+#          username: ${{ secrets.SSH_USERNAME }}
+#          password: ${{ secrets.SSH_PRIVATE_KEY }}
+#          script: |
+#            docker pull eventgamer67/my-schedule
+#            docker stop my-schedule-container || true
+#            docker rm my-schedule-container || true
+#            docker rmi eventgamer67/my-schedule || true
+#            docker run -d \
+#              --name my-schedule-container \
+#              -e SCHEDULER_PARSER_TELEGRAM_TOKEN='5261332325:AAHnbJNzHfwtci6jXc_7Y1mGJJ5wfo0tXQo' \
+#              -e SCHEDULER_SUPABASE_URL='https://ojbsikxdqcbuvamygezd.supabase.co' \
+#              -e SCHEDULER_SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qYnNpa3hkcWNidXZhbXlnZXpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTQ1Mzg0NCwiZXhwIjoyMDI1MDI5ODQ0fQ.vDdfXpbYNoWgqP0c3I7M9G6oT0e_-UXnr_VCYNaHcOw' \
+#              -e SCHEDULER_REDIS_HOST_URL='monorail.proxy.rlwy.net' \
+#              -e SCHEDULER_REDIS_PORT='13877' \
+#              -e SCHEDULER_REDIS_PASSWORD='BNFODHMBEaF3fdNd4akOD2CPg5HgEMla' \
+#              -e SCHEDULER_REDIS_USERNAME='default' \
+#              eventgamer67/my-schedule \
+#              python ./bot.py parser

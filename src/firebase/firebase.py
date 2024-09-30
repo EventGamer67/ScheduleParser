@@ -3,8 +3,6 @@ from typing import List
 import firebase_admin
 from firebase_admin import messaging, credentials
 
-from src import getSubs
-
 cred = credentials.Certificate({
     "type": "service_account",
     "project_id": "chronos-29a6e",
@@ -22,7 +20,7 @@ firebase_admin.initialize_app(cred)
 
 
 def send_message_to_topic(title, body, sup):
-    registration_tokens = getSubs(sup)
+    registration_tokens = sup.getSubs(sup)
 
     web_subs = [sub.token for sub in registration_tokens if sub.clientID == 1]
     android_subs = [sub.token for sub in registration_tokens if sub.clientID == 2]

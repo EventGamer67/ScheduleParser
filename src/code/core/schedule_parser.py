@@ -19,14 +19,15 @@ from io import BytesIO
 import datetime
 
 
-def getParaNameAndTeacher(para: str, data_model: Data, supabase_worker: supabase_worker.SupaBaseWorker) -> None | list[str]:
+def getParaNameAndTeacher(para: str, data_model: Data, supabase_worker: supabase_worker.SupaBaseWorker) -> None | list[
+    str]:
     if not para:
         return None
 
     cell_text = para.replace('\n', ' ').replace('\t', ' ')
     cell_text = re.sub(r' {2,}', ' ', cell_text)
-    
-    #в ячейке одно слово
+
+    # в ячейке одно слово
     if len(cell_text.strip().split(' ')) == 1:
         print(f"ЧТО ЗА ХУЙНЯ {cell_text}")
         finded_teachers = get_teachers_from_string(teachers=data_model.TEACHERS, shortName=cell_text)
@@ -34,29 +35,28 @@ def getParaNameAndTeacher(para: str, data_model: Data, supabase_worker: supabase
             return ["", cell_text]
 
     sample = cell_text.replace('.', '').replace(' ', '').lower()
-    
+
     finded_teachers = get_teachers_from_string(teachers=data_model.TEACHERS, shortName=sample)
-    
-    
-    
+
     if finded_teachers is None:
-        
-        founded_raw = get_teacher_from_synonyms_in_raw_text(teachers=data_model.TEACHERS,search_text=cell_text)
+
+        founded_raw = get_teacher_from_synonyms_in_raw_text(teachers=data_model.TEACHERS, search_text=cell_text)
         if founded_raw[0] is not None:
-            return [founded_raw[0], cell_text.replace(founded_raw[1],'').strip()]
-        
-        
+            return [founded_raw[0], cell_text.replace(founded_raw[1], '').strip()]
+
         search_text: str = cell_text.strip().split(' ')
         for element in search_text:
-            founded_course : Course | None = supabase_worker.get_course_from_synonyms(element,courses=data_model.COURSES)
+            founded_course: Course | None = supabase_worker.get_course_from_synonyms(element,
+                                                                                     courses=data_model.COURSES)
             if founded_course is not None:
-                teacher = cell_text.replace(founded_course.name,'').strip()
-                accurate_teacher = supabase_worker.get_teacher_from_synonyms(search_text=teacher,teachers=data_model.TEACHERS)
+                teacher = cell_text.replace(founded_course.name, '').strip()
+                accurate_teacher = supabase_worker.get_teacher_from_synonyms(search_text=teacher,
+                                                                             teachers=data_model.TEACHERS)
                 if accurate_teacher is None:
-                    return [teacher,founded_course.name]
+                    return [teacher, founded_course.name]
                 return [accurate_teacher.name, founded_course.name]
 
-    
+
     else:
         if len(finded_teachers) == 1:
             return [finded_teachers[0].name, _clean_teacher_name(sample, finded_teachers[0].name)]
@@ -67,7 +67,6 @@ def getParaNameAndTeacher(para: str, data_model: Data, supabase_worker: supabase
     if "Резерв" in cell_text:
         print("see reserveed")
         return _handle_reserved(cell_text)
-
 
     return _handle_excpetions_teacher(sample, cell_text)
 
@@ -125,7 +124,7 @@ def removeDuplicates(table):
     index = 0
     cleared = []
     for row in table:
-        if ((table[index - 1])[0] == row[0]):
+        if (table[index - 1])[0] == row[0]:
             continue
         else:
             cleared.append(row)
@@ -167,43 +166,48 @@ def recoverTeachers(table):
 
 
 def defineGroups(groups, table):
-    print(groups)
-    groupIndex = -1
+    group_index = 0
     groupParas = []
     group = groups[0]
     divided = {}
-    for row in table:
-        print(group)
-        print(divided.get(group))
-        if (row[0] == '№'):
-            print(row)
+
+    if table[0][0] != '№':
+        raise Exception("invalid table")
+
+    for row_index in range(1, len(table)):
+        # print(group)
+        # print(divided.get(group))
+        if table[row_index][0] == '№':
+            print(f'UPDATE AFTER ROW')
+            print(f'{table[row_index - 1]}')
+            print(f'{table[row_index]}')
+            print(f'{table[row_index + 1]}')
             try:
-                print(group)
                 divided[group] = groupParas
-                groupIndex = groupIndex + 1
-                group = groups[groupIndex]
+                group_index = group_index + 1
+                group = groups[group_index]
+                groupParas = []
             except Exception as err:
                 print(err)
-            groupParas = []
+                raise Exception(err)
         else:
-            groupParas.append(row)
-        pass
+            groupParas.append(table[row_index])
     else:
         divided[group] = groupParas
         pass
-    raise Exception("a")
     return divided
 
 
 def clearTime(rows):
     cleared = []
     for row in rows:
-        if(row[1] != ''):
+        if (row[1] != ''):
             row.pop(1)
             cleared.append(row)
         else:
             cleared.append(row)
     return cleared
+
 
 def clearSingleStrings(table):
     cleared = []
@@ -220,16 +224,19 @@ def clearDiscipline(table):
                     row[6] == ''):
                 table.remove(row)
                 continue
-            if (row[1].__contains__("Дисциплина, вид занятия, преподаватель") or row[2].__contains__("Дисциплина, вид занятия, преподаватель") ):
+            if (row[1].__contains__("Дисциплина, вид занятия, преподаватель") or row[2].__contains__(
+                    "Дисциплина, вид занятия, преподаватель")):
                 table.remove(row)
                 continue
             pass
     return table
 
 
-def get_cabinet_by_id(cabinets : List[Cabinet], target_name :str, sup, data) -> Cabinet:
+def get_cabinet_by_id(cabinets: List[Cabinet], target_name: str, sup, data) -> Cabinet:
     for cabinet in cabinets:
-        if cabinet.name.lower().replace(' ','').replace('.','').replace('-','').replace('\n','') == target_name.lower().replace(' ','').replace('.','').replace('-','').replace('\n',''):
+        if cabinet.name.lower().replace(' ', '').replace('.', '').replace('-', '').replace('\n',
+                                                                                           '') == target_name.lower().replace(
+                ' ', '').replace('.', '').replace('-', '').replace('\n', ''):
             return cabinet
         else:
             continue
@@ -260,8 +267,8 @@ def get_teacher_from_synonyms_in_raw_text(teachers: List[Teacher], search_text: 
     for i in teachers:
         for syn in i.synonyms:
             if search_text.__contains__(syn):
-                return (i.name,syn)
-    return (None,None)
+                return (i.name, syn)
+    return (None, None)
 
 
 def get_teachers_from_string(teachers: List[Teacher], shortName: str) -> List[Teacher]:
@@ -277,7 +284,7 @@ def get_teachers_from_string(teachers: List[Teacher], shortName: str) -> List[Te
                 founded.append(teacher)
 
     # if len(founded) > 0:
-        
+
     return None
 
     # best_match = None
@@ -320,18 +327,18 @@ def get_teacher_by_id(teachers, target_name, sup, data) -> Teacher:
             if search is not None:
                 return search
     print(f"{target_name}")
-    #supabase_worker.addTeacher(target_name, sup=sup, data=data)
+    # supabase_worker.addTeacher(target_name, sup=sup, data=data)
     raise Exception(target_name)
     return get_teacher_by_id(teachers=data.TEACHERS, target_name=target_name, sup=sup, data=data)
 
 
 def get_group_by_id(groups, target_name, supabase_worker, data) -> Group:
     for group in groups:
-        if group.name.upper() == target_name.replace('_','-').upper():
+        if group.name.upper() == target_name.replace('_', '-').upper():
             return group
         else:
             continue
-    #supabase_worker.addGroup(target_name.upper(), sup=sup, data=data)
+    # supabase_worker.addGroup(target_name.upper(), sup=sup, data=data)
     raise Exception(target_name)
     return get_group_by_id(groups=data.GROUPS, target_name=target_name.upper(), sup=sup, data=data)
     return None
@@ -343,11 +350,11 @@ def get_course_by_id(courses, target_name, sup: supabase_worker.SupaBaseWorker, 
             return course
         else:
             continue
-    founded_course: Course | None = sup.get_course_from_synonyms(target_name,courses=data.COURSES)
+    founded_course: Course | None = sup.get_course_from_synonyms(target_name, courses=data.COURSES)
     if founded_course is None:
         raise Exception(target_name)
-        #return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
-        #supabase_worker.addCourse(target_name, sup=sup, data=data)
+        # return get_course_by_id(data.COURSES, target_name=target_name, sup=sup, data=data)
+        # supabase_worker.addCourse(target_name, sup=sup, data=data)
     return founded_course
 
 
@@ -462,10 +469,11 @@ def convertMonthNameToIndex(name: str):
 
 def getMonthTable(soup: BeautifulSoup, monthIndex: int):
     newtables = soup.find_all(name='table')
-    #newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
-    #oldtables = soup.find_all('table', {'class': 'calendar-month'})
-    #newtables.extend(oldtables)
-    month = convertMonthNameToIndex(newtables[monthIndex].find_all('td',{'class':'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
+    # newtables = soup.find_all('table', {'class': 'MsoNormalTable'})
+    # oldtables = soup.find_all('table', {'class': 'calendar-month'})
+    # newtables.extend(oldtables)
+    month = convertMonthNameToIndex(
+        newtables[monthIndex].find_all('td', {'class': 'calendar-month-title'})[0].get_text().split(' ')[0]) + 1
     tables = getAllMonthTables(soup)
     return newtables[monthIndex], month
 
@@ -478,35 +486,36 @@ def getAllMonthTables(soup: BeautifulSoup) -> List[ZamTable]:
         if class_type == 'calendar-month':
             if len(i.find_all('td', {'class': 'calendar-month-title'})) == 0:
                 header = "Ничего"
-                if(i.find_all('a',{'class':'calendar-month-title'})):
-                    header = i.find_next('a',{'class':'calendar-month-title'}).get_text()
+                if (i.find_all('a', {'class': 'calendar-month-title'})):
+                    header = i.find_next('a', {'class': 'calendar-month-title'}).get_text()
                 else:
                     header = i.find_previous().find_previous().get_text().replace('\xa0', '')
                 year = int(datetime.datetime.now().year)
-                if(len(header.split(' ')) > 1):
+                if (len(header.split(' ')) > 1):
                     index = convertMonthNameToIndex(header.split(' ')[0])
                     year = int(header.split(' ')[1])
                 else:
-                    index = convertMonthNameToIndex(header.replace(' ',''))
-                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+                    index = convertMonthNameToIndex(header.replace(' ', ''))
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
                 pass
             else:
-                header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(' ')
+                header = i.find_all('td', {'class': 'calendar-month-title'})[0].get_text().replace('\xa0', '').split(
+                    ' ')
                 index = convertMonthNameToIndex(header[0])
                 year = int(header[1])
-                zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+                zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
         if class_type == 'MsoNormalTable':
             header = i.find_next(name='strong').get_text().replace('\xa0', '')
             year = 2024
             index = convertMonthNameToIndex(header)
-            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
         if class_type == 'ui-datepicker-calendar':
             header = i.find_previous().get_text().replace('\xa0', '').split(' ')
             index = convertMonthNameToIndex(header[0])
             year = int(header[1])
-            zam_tables.append(ZamTable(raw=i, month_index=index + 1,year=year))
+            zam_tables.append(ZamTable(raw=i, month_index=index + 1, year=year))
             pass
     return zam_tables
 
@@ -596,13 +605,15 @@ def ParasGroupToSoup(group, paras, startday, supabase_worker: supabase_worker.Su
         days = [ParaMonday, paraTuesday, paraWednesday, paraThursday, paraFriday, paraSaturday]
         loopindex = 0
         for day in days:
-            aww = getParaNameAndTeacher(day,data, supabase_worker=supabase_worker)
+            aww = getParaNameAndTeacher(day, data, supabase_worker=supabase_worker)
             if aww is not None:
                 teacher = get_teacher_by_id(target_name=aww[0], teachers=data.TEACHERS, sup=supabase_worker, data=data)
                 course = get_course_by_id(target_name=aww[1], courses=data.COURSES, sup=supabase_worker, data=data)
-                cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS, sup=supabase_worker,
+                cabinet = get_cabinet_by_id(target_name=para[2 * (loopindex + 1)], cabinets=data.CABINETS,
+                                            sup=supabase_worker,
                                             data=data)
-                if (teacher is not None and course is not None and cabinet is not None):
+                if (
+                        teacher is not None and course is not None and cabinet is not None and teacher.name != '' and course.name != ''):
                     supabasePARA.append(
                         {'group': group.id, 'number': number, 'course': course.id, 'teacher': teacher.id,
                          'cabinet': cabinet.id, 'date': str(date + datetime.timedelta(days=loopindex))})
@@ -610,21 +621,22 @@ def ParasGroupToSoup(group, paras, startday, supabase_worker: supabase_worker.Su
             loopindex = loopindex + 1
 
             pass
-    # supabase_worker.client.table('Paras').insert(supabasePARA).execute()
+    supabase_worker.client.table('Paras').insert(supabasePARA).execute()
     pass
 
 
-def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,stream: BytesIO):
-    # doc = Docx.Document(docx=stream)
-    doc = Docx.Document(docx="sample schedule.docx")
+def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data, stream: BytesIO):
+    doc = Docx.Document(docx=stream)
+    # doc = Docx.Document(docx=f"schedule {date}.docx")
     groups = []
     for i in doc.paragraphs:
         header: str = i.text
         if (header.__contains__("Группа - ")):
-            group_name = header.replace("Группа - ",'').replace(' ','')
+            group_name = header.replace("Группа - ", '').replace(' ', '')
             founded_groups = supabase_worker.get_groups_from_string(group_name, data_model=data)
             if len(founded_groups) == 0:
-                supabase_worker.addGroup(name=group_name,data_model=data)
+                supabase_worker.addGroup(name=group_name, data_model=data)
+                gr = group_name
                 pass
             else:
                 gr = founded_groups[0].name
@@ -652,10 +664,10 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
             pass
         fin.append(i)
 
-
     temp = clearDiscipline(temp)
     temp = clearSingleStrings(temp)
-    #temp = clearTime(temp)
+
+    # temp = clearTime(temp)
 
     # es = []
     # for i in temp:
@@ -670,27 +682,157 @@ def parseParas(date, supabase_worker: supabase_worker.SupaBaseWorker, data,strea
     #         old_row[5] = f"{old_row[5]} \n{i[6]}"
     #     old_row = i
 
+    # temp = es
 
-    #temp = es
+    def is_all_empty(my_list):
+        for item in my_list:
+            if item != '':
+                return False
+        return True
 
-    old = []
+    def para_count_in_row(row):
+        if len(row) == 13:
+            count = 0
+            for i in range(1, len(row)):
+                if i % 2 == 1:
+                    if row[i] != '':
+                        count = count + 2
+            if count % 2 == 0:
+                return count / 2
+            else:
+                print(row)
+                raise Exception(f"invalid row para count {row}]")
+        else:
+            raise Exception(f"invalid row {row}")
+
+    def get_row_text_count_without_number_para(row):
+        count = 0
+        for i in range(1, len(row)):
+            if row[i] != '':
+                count = count + 1
+        return count
+
+    # Clean doublicate cabinets on new line like ['','123','1234','1234'] to line upper
+    cleaned_from_unused_cabinets = []
+    iteraion = 0
     for i in temp:
-        print(i)
+        if i[0] == '' and not is_all_empty(i):
+            if para_count_in_row(temp[iteraion - 2]) == get_row_text_count_without_number_para(temp[iteraion - 1]):
+                temp.remove(temp[iteraion - 1])
 
-    divided = defineGroups(groups, temp)
+                # print(temp[iteraion - 2])
+                # print()
+                # print(temp[iteraion])
+                # print(temp[iteraion + 1])
+                # print(20 * "-")
+                pass
+            else:
+                cleaned_from_unused_cabinets.append(i)
+        else:
+            cleaned_from_unused_cabinets.append(i)
+
+        iteraion = iteraion + 1
+
+    cleaned_from_duplicate_cabinets = []
+    for i in range(0, len(temp)):
+        if len(temp[i]) < 13 and temp[i][0] != '№':
+            print(f"REMOVE \n {temp[i - 1]} \n {temp[i]}")
+            # temp.pop(i)
+            pass
+        else:
+            cleaned_from_duplicate_cabinets.append(temp[i])
+
+    temp = cleaned_from_duplicate_cabinets
+    # for i in temp:
+    #     print(i)
+    #     if len(i) == 13 and i[0] != '№' and not is_all_empty(i):
+    #         print(20*"_")
+    #         print(para_count_in_row(temp[iteraion - 2]))
+    #         print(get_row_text_count_without_number_para(temp[iteraion - 1]))
+    #         print(i)
+    #         print(20 * "_")
+    #
+    #         if para_count_in_row(temp[iteraion - 2]) == get_row_text_count_without_number_para(temp[iteraion - 1]):
+    #             temp.remove(temp[iteraion - 1])
+    #
+    #             # print(temp[iteraion - 2])
+    #             # print()
+    #             # print(temp[iteraion])
+    #             # print(temp[iteraion + 1])
+    #             # print(20 * "-")
+    #             pass
+    #         else:
+    #             cleaned_from_unused_cabinets.append(i)
+    #     else:
+    #         cleaned_from_unused_cabinets.append(i)
+    #
+    #     iteraion = iteraion + 1
+
+
+
+    # raise Exception("end")
+
+    for iter in range(0, len(temp)):
+        if temp[iter][0] == '' and not is_all_empty(temp[iter]):
+            if get_row_text_count_without_number_para(temp[iter - 1]) > 1:
+                # print(20 * "-")
+                # print("WANNA COPY")
+                # print(temp[iter - 2])
+                # print(temp[iter - 1])
+                # print(temp[iter])
+                # print(temp[iter + 1])
+                # print(20 * "-")
+
+                for current_column in range(0, len(temp[iter])):
+                    temp[iter - 1][current_column] = temp[iter - 1][current_column] + ' ' + temp[iter][current_column]
+
+    for row in temp:
+        if row[0] == '' and not is_all_empty(row):
+            # print(f"to delete {row}")
+            temp.remove(row)
+
+    for iter in range(0, len(temp)):
+        # print(temp[iter])
+        if (temp[iter][0] == '' and not is_all_empty(temp[iter])):
+            # print(20*"-")
+            # print(temp[iter - 2])
+            # print(temp[iter-1])
+            print(temp[iter])
+            # print(temp[iter + 1])
+            # print(temp[iter +2 ])
+            # print(20 * "-")
+
+    new_list = []
+    for i in range(0, len(temp)):
+        if temp[i] == temp[-1]:
+            new_list.append(temp[i])
+            continue
+        if is_all_empty(temp[i]):
+            continue
+        new_list.append(temp[i])
+
+    for i in range(0, len(new_list)):
+        if new_list[i][0] == '1':
+            if new_list[i - 1][0] == '7':
+                new_list.insert(i, ['№', 'RECOVERED'])
+
+    # for i in new_list:
+    #     print(i)
+
+    divided = defineGroups(groups, new_list)
     for gruppa in divided:
-
         paras = divided[gruppa]
-        divided[gruppa] = removeDuplicates(paras)
-        paras = divided[gruppa]
+        # divided[gruppa] = removeDuplicates(paras)
+        # paras = divided[gruppa]
         divided[gruppa] = removeDoubleRows(paras)
-        paras = divided[gruppa]
-        divided[gruppa] = recoverTeachers(paras)
+        # paras = divided[gruppa]
+        # divided[gruppa] = recoverTeachers(paras)
         # for i in paras:
         #     if len(i) < 10:
         #         print("GERE")
         #         for s in range(12 - len(i)):
         #             i.append('')
-        ParasGroupToSoup(group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, supabase_worker=supabase_worker, data=data),paras=divided[gruppa], supabase_worker=supabase_worker, startday=date, data=data)
+        ParasGroupToSoup(
+            group=get_group_by_id(target_name=gruppa, groups=data.GROUPS, supabase_worker=supabase_worker, data=data),
+            paras=divided[gruppa], supabase_worker=supabase_worker, startday=date, data=data)
     pass
-

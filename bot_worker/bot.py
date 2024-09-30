@@ -1,17 +1,54 @@
+import asyncio
 import datetime
+import html
+import logging
+import sys
+import traceback
+from urllib.request import urlopen
 
+from aiogram.enums import ParseMode
+from celery import Celery
+from celery.result import AsyncResult
+import pytz
+import requests
+from aiogram import Bot, Dispatcher, Router, F
 from aiogram.client.default import DefaultBotProperties
+from aiogram.filters import Command
+from aiogram.fsm.storage import redis
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, FSInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from bs4 import BeautifulSoup
+from typing import List
 
+from docx2pdf import convert
+
+from bot_worker import parse_zamenas, parse_schedule
 from parser_secrets import *
 from src import *
+from src.code.core.downloader import create_pdf_screenshots, cleanup_temp_files
+from src.code.core.schedule_parser import getAllMonthTables, getAllTablesLinks, downloadFile, getLastZamenaLink
+from src.code.models.data_model import Data
+from src.code.models.parsed_date_model import ParsedDate
+from src.code.models.zamena_table_model import ZamTable
+from src.code.network.supabase_worker import SupaBaseWorker
+from src.code.tools.functions import get_remote_file_hash, get_file_extension
 from src.firebase.firebase import send_message_to_topic
 
-sup = initSupabase()
+sup = SupaBaseWorker()
 dp = Dispatcher()
 router = Router()
 admins = [1283168392]
 r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True, password=REDIS_PASSWORD,
                 username=REDIS_USERNAME)
+
+
+celery_app = Celery(
+    'telegram_bot',
+    broker='amqp://guest:guest@127.0.0.1:5672//',  # Используйте 127.0.0.1 для RabbitMQ
+    backend='redis://127.0.0.1:6379/0'             # Используйте 127.0.0.1 для Redis
+)
 
 
 async def on_on(bot: Bot):
@@ -55,7 +92,7 @@ async def checkNew(bot: Bot):
     soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
     site_links = getAllTablesLinks(tables)
-    databaseLinks: List[ParsedDate] = get_zamena_file_links()
+    databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
     await on_check(bot=bot)
     if site_links.__eq__(databaseLinks):
         pass
@@ -112,7 +149,7 @@ async def checkNew(bot: Bot):
                             sup.table('ZamenasFull').delete().eq('date', datess).execute()
                             res = sup.table('ZamenaFileLinks').update({'hash': hash}).eq('link', i.link).execute()
                             await bot.send_message(chat_id=admins[0], text=f'Обновлен хеш {res}')
-                            parse(link=i.link, date=datess, sup=sup)
+                            parse_zamenas(url=i.link, date_=datess)
                             await bot.send_message(chat_id=admins[0], text='parsed')
                     except Exception as error:
                         print(error)
@@ -158,7 +195,7 @@ async def checkNew(bot: Bot):
                 sup.table('Zamenas').delete().eq('date', datess).execute()
                 sup.table('ZamenasFull').delete().eq('date', datess).execute()
                 sup.table('ZamenaFileLinks').delete().eq('date', datess).execute()
-                parse(link=zamm.link, date=datess, sup=sup)
+                parse_zamenas(url=zamm.link, date_=datess)
                 await bot.send_message(chat_id=admins[0], text='parsed')
             except Exception as error:
                 await bot.send_message(chat_id=admins[0], text=f'{str(error)}\n{str(error.__traceback__)}')
@@ -240,7 +277,7 @@ async def my_handlers(message: Message):
             date = message.text.split(' ')[1]
             date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
             link = message.text.split(' ')[2]
-            parse(link=link, date=date, sup=sup)
+            parse_schedule(url=link, date_=date)
             await message.answer(f'parsed')
         except Exception as error:
             await message.answer(text=f'{str(error)}\n{traceback.format_exc()}')
@@ -253,24 +290,23 @@ async def my_handlers(message: Message):
             date = message.text.split(' ')[1]
             date = datetime.date(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
             link = message.text.split(' ')[2]
-            sup = initSupabase()
-            data = Data(sup=sup)
-            filename = f"zam-{date.year}-{date.month}-{date.day}"
-            response = requests.get(link)
-            if response.status_code == 200:
-                with open(f"{filename}.pdf", 'wb') as file:
-                    file.write(response.content)
-                    file.flush()
-            else:
-                raise Exception("Файл не загружен")
-            parseParas(filename, date=date, sup=sup, data=data)
-            try:
-                if (os.path.isfile(f"{filename}.pdf")):
-                    os.remove(f"{filename}.pdf")
-                if (os.path.isfile(f"{filename}.docx")):
-                    os.remove(f"{filename}.docx")
-            except Exception as error:
-                await message.answer(str(error))
+            # data = Data(sup=sup)
+            # filename = f"zam-{date.year}-{date.month}-{date.day}"
+            # response = requests.get(link)
+            # if response.status_code == 200:
+            #     with open(f"{filename}.pdf", 'wb') as file:
+            #         file.write(response.content)
+            #         file.flush()
+            # else:
+            #     raise Exception("Файл не загружен")
+            parse_schedule(url=link, date_=date)
+            # try:
+            #     if (os.path.isfile(f"{filename}.pdf")):
+            #         os.remove(f"{filename}.pdf")
+            #     if (os.path.isfile(f"{filename}.docx")):
+            #         os.remove(f"{filename}.docx")
+            # except Exception as error:
+            #     await message.answer(str(error))
             await message.answer(f'parsed')
         except Exception as error:
             await message.answer(text=f'{str(error)}\n{traceback.format_exc()}')
@@ -284,46 +320,46 @@ async def my_handler(message: Message):
         link, date = getLastZamenaLink(soup=soup)
         await message.answer(f"{link} {date}")
 
-
-@dp.message(F.text, Command("merge_cab"))
-async def my_handler(message: Message):
-    if message.chat.id in admins:
-        merge_from = message.text.split()[1]
-        merge_to = message.text.split()[2]
-        data = sup.table('Paras').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
-        print(data)
-        count = len(data.data)
-        data = sup.table('Zamenas').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
-        print(data)
-        count = count + len(data.data)
-        sup.table('Cabinets').delete().eq('id', merge_from).execute()
-        await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
-
-
-@dp.message(F.text, Command("merge_teacher"))
-async def my_handler(message: Message):
-    if message.chat.id in admins:
-        merge_from = message.text.split()[1]
-        merge_to = message.text.split()[2]
-        data = sup.table('Paras').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
-        print(data)
-        count = len(data.data)
-        data = sup.table('Zamenas').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
-        print(data)
-        count = count + len(data.data)
-        sup.table('Teachers').delete().eq('id', merge_from).execute()
-        await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
+#
+# @dp.message(F.text, Command("merge_cab"))
+# async def my_handler(message: Message):
+#     if message.chat.id in admins:
+#         merge_from = message.text.split()[1]
+#         merge_to = message.text.split()[2]
+#         data = sup.table('Paras').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
+#         print(data)
+#         count = len(data.data)
+#         data = sup.table('Zamenas').update({'cabinet': merge_to}).eq('cabinet', merge_from).execute()
+#         print(data)
+#         count = count + len(data.data)
+#         sup.table('Cabinets').delete().eq('id', merge_from).execute()
+#         await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
+#
+#
+# @dp.message(F.text, Command("merge_teacher"))
+# async def my_handler(message: Message):
+#     if message.chat.id in admins:
+#         merge_from = message.text.split()[1]
+#         merge_to = message.text.split()[2]
+#         data = sup.table('Paras').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
+#         print(data)
+#         count = len(data.data)
+#         data = sup.table('Zamenas').update({'teacher': merge_to}).eq('teacher', merge_from).execute()
+#         print(data)
+#         count = count + len(data.data)
+#         sup.table('Teachers').delete().eq('id', merge_from).execute()
+#         await message.answer(f"Поменял с {merge_from} на {merge_to} | {count} раз")
 
 
 async def main() -> None:
     bot = Bot(SCHEDULE_PARSER_TELEGRAM_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
     scheduler = AsyncIOScheduler()
-    trigger = CronTrigger(minute='0/15', hour='2-17')
-    scheduler.add_job(checkNew, trigger, args=(bot,))
+    #trigger = CronTrigger(minute='0/15', hour='2-17')
+    #scheduler.add_job(checkNew, trigger, args=(bot,))
     scheduler.start()
     try:
         await on_on(bot=bot)
-        await checkNew(bot=bot)
+        #await checkNew(bot=bot)
         await dp.start_polling(bot)
     finally:
         scheduler.shutdown()

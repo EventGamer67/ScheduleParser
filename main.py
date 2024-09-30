@@ -29,14 +29,19 @@
 #
 # from bot_worker import parse
 # from src.code.core.downloader import parse_teacher_schedule
-
 #parse(link="https://www.uksivt.ru/storage/files/all/ZAMENY/%D0%B0%D0%BF%D1%80%D0%B5%D0%BB%D1%8C/25.04.24%D0%B3..docx.pdf",date_=datetime.date(2024,8,30))
 
 #parse_teacher_schedule()
 
-import datetime
-from bot_worker import parse_schedule
+# import datetime
+# from bot_worker import parse_schedule, parse_zamenas
+#
+# url = "https://www.uksivt.ru/storage/files/all/ZAMENY/2024/11.09.pdf"
+# parse_zamenas(url=url,date_=datetime.date(2024,9,11))
 
-url = "https://www.uksivt.ru//storage/files/all/RASPISANYE/1%20%D1%81%D0%B5%D0%BC%D0%B5%D1%81%D1%82%D1%80%202024-2025%20%D1%83%D1%87.%D0%B3%D0%BE%D0%B4/%D0%A0%D0%B0%D1%81%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5%20%D1%81%2002.09%20%D0%BF%D0%BE%2007.09.24%D0%B3.pdf"
+#parse_schedule(link=url,date_=datetime.date(2024,9,2))
 
-parse_schedule(link=url,date_=datetime.date(2024,9,2))
+#url = "https://www.uksivt.ru//storage/files/all/03.09.24.pdf"
+#parse_zamenas(link=url,date_=datetime.date(2024,9,3))
+
+
