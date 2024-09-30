@@ -1,9 +1,9 @@
-# import os
+import os
 #
 # SCHEDULE_PARSER_TELEGRAM_TOKEN = os.environ["SCHEDULER_PARSER_TELEGRAM_TOKEN"]
-# SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
-# SUPABASE_URL = os.environ["SCHEDULER_SUPABASE_URL"]
-# SUPABASE_ANON_KEY = os.environ["SCHEDULER_SUPABASE_ANON_KEY"]
+SCHEDULE_URL = 'https://www.uksivt.ru/zameny'
+SUPABASE_URL = os.environ["SCHEDULER_SUPABASE_URL"]
+SUPABASE_ANON_KEY = os.environ["SCHEDULER_SUPABASE_ANON_KEY"]
 #
 # REDIS_HOST_URL = os.environ["SCHEDULER_REDIS_HOST_URL"]
 # REDIS_PORT = os.environ["SCHEDULER_REDIS_PORT"]
