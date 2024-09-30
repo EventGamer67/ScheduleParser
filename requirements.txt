@@ -11,14 +11,12 @@ redis~=5.0.8
 PyMuPDF
 supabase
 firebase-admin
-numpy==2.1.1
 hpack~=4.0.0
 hyperframe~=6.0.1
 h2~=4.1.0
 pytest~=7.4.3
 lxml~=4.9.3
 soupsieve~=2.5
-opencv-python==4.9.0.80
 h11~=0.14.0
 cryptography~=42.0.8
 cffi~=1.16.0
@@ -77,3 +75,5 @@ cachecontrol~=0.14.0
 msgpack~=1.0.8
 PyJWT~=2.8.0
 celery~=5.4.0
+numpy>=1.21.0
+opencv-python>=4.5.0
