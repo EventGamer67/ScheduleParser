@@ -9,8 +9,8 @@ from src.code.core.schedule_parser import getLastZamenaLink
 
 parser_celery_app = Celery(
     'parser',
-    broker='amqp://guest:guest@127.0.0.1:5672//',  # Используйте 127.0.0.1 для RabbitMQ
-    backend='redis://127.0.0.1:6379/0'  # Используйте 127.0.0.1 для Redis
+    broker='amqp://guest:guest@rabbitmq:5672//',  # Используйте 127.0.0.1 для RabbitMQ
+    backend='redis://redis:6379/0'  # Используйте 127.0.0.1 для Redis
 )
 
 
