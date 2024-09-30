@@ -67,7 +67,6 @@ storage3~=0.7.7
 gotrue~=2.7.0
 postgrest~=0.16.11
 supafunc~=0.5.1
-scipy~=1.12.0
 deprecation~=2.1.0
 StrEnum~=0.4.15
 pycparser~=2.22
