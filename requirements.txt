@@ -74,5 +74,3 @@ cachecontrol~=0.14.0
 msgpack~=1.0.8
 PyJWT~=2.8.0
 celery~=5.4.0
-python-magic-bin==0.4.14
-python-magic==0.4.27
