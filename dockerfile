@@ -15,5 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code into the container
 COPY . .
 
-# Specify the command to run your application
-CMD ["celery", "-A", "broker", "worker", "--loglevel=info", "--pool=solo"]
+# Use a bash script to run both processes
+CMD ["bash", "-c", "celery -A broker beat --loglevel=info & celery -A broker worker --loglevel=info --pool=solo"]
