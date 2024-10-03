@@ -22,10 +22,13 @@ print("***")
 
 
 parser_celery_app.conf.beat_schedule = {
-    "add-every-30-seconds": {
-        "task": "parser.tasks.check_new",
-        "schedule": 30.0,
-        "args": (),
+    "check-new-every-5-minutes": {
+        "task": "parser.tasks.check_new",  # Путь к вашей задаче
+        "schedule": crontab(
+            minute="*/5", hour="6-22"
+        ),  # Каждые 5 минут с 6 до 22 часов
+        "args": (),  # Аргументы для задачи, если есть
     },
 }
+
 parser_celery_app.conf.timezone = "Asia/Yekaterinburg"
