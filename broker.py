@@ -1,36 +1,31 @@
 from celery import Celery
-from urllib.request import urlopen
-from bs4 import BeautifulSoup
-from celery import shared_task
+from celery.schedules import crontab
 
-# from broker import parser_celery_app
-from src.code.core.schedule_parser import getLastZamenaLink
+from parser_secrets import BACKEND_URL, BROKER_URL
 
+# from parser.tasks import check_new
+from src.code.network.supabase_worker import SupaBaseWorker
+
+sup = SupaBaseWorker()
 
 parser_celery_app = Celery(
-    'parser',
-    broker='amqp://guest:guest@rabbitmq:5672//',  # Используйте 127.0.0.1 для RabbitMQ
-    backend='redis://redis:6379/0'  # Используйте 127.0.0.1 для Redis
+    "parser",
+    broker=BROKER_URL,
+    backend=BACKEND_URL,
 )
 
-
-@parser_celery_app.task
-def get_latest_zamena_link():
-    try:
-        html = urlopen("https://www.uksivt.ru/zameny").read()
-        soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-        link, date = getLastZamenaLink(soup=soup)
-        #parser_celery_app.send_task('telegram.send_message_via_bot', args=[chat_id, f"Последняя замена\n{date}\n{link}"])
-        return {'date': date, 'link': link}
-    except:
-        #parser_celery_app.send_task('telegram.send_message_via_bot', args=[-1, "Ошибка"])
-        return {'message': 'failed'}
-
-
-# @parser_celery_app.tasks
-# def
-
+parser_celery_app.autodiscover_tasks(["parser"], force=True)
 
 print("***")
 print(parser_celery_app.tasks.keys())
 print("***")
+
+
+parser_celery_app.conf.beat_schedule = {
+    "add-every-30-seconds": {
+        "task": "parser.tasks.check_new",
+        "schedule": 30.0,
+        "args": (),
+    },
+}
+parser_celery_app.conf.timezone = "Asia/Yekaterinburg"
