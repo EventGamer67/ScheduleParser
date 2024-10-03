@@ -11,6 +11,7 @@ from parser_secrets import (
     REDIS_PORT,
     REDIS_USERNAME,
     REDIS_PASSWORD,
+    DEBUG_CHANNEL,
 )
 from src.code.core.downloader import create_pdf_screenshots
 from src.code.core.schedule_parser import (
@@ -34,6 +35,9 @@ def get_latest_zamena_link():
 
 def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
+        parser_celery_app.send_task(
+            "telegram.send_message_via_bot", args=[chat_id, f"Получено в очередь"]
+        )
         html = urlopen("https://www.uksivt.ru/zameny").read()
         soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
         link, date = getLastZamenaLink(soup=soup)
@@ -47,9 +51,9 @@ def get_latest_zamena_link_telegram(chat_id: int) -> None:
 
 
 async def check_new():
-    chat_id = admins[0]
+    chat_id = DEBUG_CHANNEL
     parser_celery_app.send_task(
-        "telegram.send_message_via_bot", args=[chat_id, f"Проверил"]
+        "telegram.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
     )
     # r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True, password=REDIS_PASSWORD,
     #                 username=REDIS_USERNAME)
