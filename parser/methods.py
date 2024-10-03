@@ -32,6 +32,20 @@ def get_latest_zamena_link():
         return {"message": "failed", "reason": str(e)}
 
 
+def get_latest_zamena_link_telegram(chat_id: int) -> None:
+    try:
+        html = urlopen("https://www.uksivt.ru/zameny").read()
+        soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
+        link, date = getLastZamenaLink(soup=soup)
+        parser_celery_app.send_task(
+            "telegram.send_message_via_bot", args=[chat_id, f"{link}\n{date}"]
+        )
+    except Exception as e:
+        parser_celery_app.send_task(
+            "telegram.send_message_via_bot", args=[chat_id, f"Ошибка\n{str(e)}"]
+        )
+
+
 async def check_new():
     chat_id = admins[0]
     parser_celery_app.send_task(
