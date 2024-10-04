@@ -34,7 +34,7 @@ def get_latest_zamena_link():
         return {"message": "failed", "reason": str(e)}
 
 
-def get_latest_zamena_link_telegram(chat_id: int) -> None:
+async def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
         print("test")
         parser_celery_app.send_task(
