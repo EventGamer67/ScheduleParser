@@ -3,7 +3,6 @@ from celery.schedules import crontab
 
 from parser_secrets import BACKEND_URL, BROKER_URL
 
-# from parser.tasks import check_new
 from src.code.network.supabase_worker import SupaBaseWorker
 
 sup = SupaBaseWorker()
