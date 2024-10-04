@@ -35,19 +35,22 @@ def get_latest_zamena_link():
 
 def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
-        parser_celery_app.send_task(
-            "telegram.send_message_via_bot", args=[chat_id, f"Получено в очередь"]
-        )
+        # Создаем сигнатуру для отправки сообщения
+        send_message = signature("telegram.send_message_via_bot", args=[chat_id])
+
+        # Отправляем первое сообщение
+        send_message.delay(f"Получено в очередь")
+
+        # Парсим страницу
         html = urlopen("https://www.uksivt.ru/zameny").read()
-        soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
         link, date = getLastZamenaLink(soup=soup)
-        parser_celery_app.send_task(
-            "telegram.send_message_via_bot", args=[chat_id, f"{link}\n{date}"]
-        )
+
+        # Отправляем второе сообщение
+        send_message.delay(f"{link}\n{date}")
     except Exception as e:
-        parser_celery_app.send_task(
-            "telegram.send_message_via_bot", args=[chat_id, f"Ошибка\n{str(e)}"]
-        )
+        # В случае ошибки отправляем сообщение об ошибке
+        send_message.delay(f"Ошибка\n{str(e)}")
 
 
 async def check_new():
