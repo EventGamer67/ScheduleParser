@@ -19,8 +19,8 @@ def get_latest_zamena_link():
 
 @parser_celery_app.task
 @sync
-def get_latest_zamena_link_telegram(chat_id):
-    return methods.get_latest_zamena_link_telegram(chat_id)
+async def get_latest_zamena_link_telegram(chat_id):
+    return await methods.get_latest_zamena_link_telegram(chat_id)
 
 
 @parser_celery_app.task
