@@ -38,7 +38,7 @@ def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
         # Создаем сигнатуру для отправки сообщения
         print("test")
-        send_message = signature("telegram.send_message_via_bot", args=[chat_id])
+        send_message = signature("telegram.tasks.send_message_via_bot", args=[chat_id])
 
         # Отправляем первое сообщение
         send_message.delay(f"Получено в очередь")
@@ -58,7 +58,7 @@ def get_latest_zamena_link_telegram(chat_id: int) -> None:
 async def check_new():
     chat_id = DEBUG_CHANNEL
     parser_celery_app.send_task(
-        "telegram.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
+        "telegram.tasks.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
     )
     # r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True, password=REDIS_PASSWORD,
     #                 username=REDIS_USERNAME)
