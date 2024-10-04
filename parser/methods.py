@@ -36,7 +36,6 @@ def get_latest_zamena_link():
 
 def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
-        # Создаем сигнатуру для отправки сообщения
         print("test")
         send_message = signature("telegram.tasks.send_message_via_bot", args=[chat_id])
 
