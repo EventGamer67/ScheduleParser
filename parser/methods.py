@@ -2,6 +2,7 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from typing import List
 from aiogram.fsm.storage import redis
+from celery import signature
 
 from bot_worker.bot import admins
 from broker import sup, parser_celery_app
