@@ -1,27 +1,27 @@
+import datetime
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from typing import List
 from aiogram.fsm.storage import redis
 from celery import signature
 
+from bot_worker import parse_zamenas
 from bot_worker.bot import admins
 from broker import sup, parser_celery_app
 from parser_secrets import (
-    SCHEDULE_URL,
-    REDIS_HOST_URL,
-    REDIS_PORT,
-    REDIS_USERNAME,
-    REDIS_PASSWORD,
     DEBUG_CHANNEL,
 )
-from src.code.core.downloader import create_pdf_screenshots
 from src.code.core.schedule_parser import (
     getLastZamenaLink,
-    getAllMonthTables,
-    getAllTablesLinks,
 )
-from src.code.models.parsed_date_model import ParsedDate
-from src.code.models.zamena_table_model import ZamTable
+
+
+def parse_zamena(url: str, date: datetime.datetime):
+    try:
+        parse_zamenas(url=url, date_=date)
+        return {"res": "ok"}
+    except Exception as e:
+        return {"res": f"{str(e)}"}
 
 
 def get_latest_zamena_link():
@@ -37,18 +37,18 @@ def get_latest_zamena_link():
 async def get_latest_zamena_link_telegram(chat_id: int) -> None:
     try:
         print("test")
-        parser_celery_app.send_task(
-            "telegram.tasks.send_message_via_bot", args=[chat_id, "Получено в очередь"]
-        )
+        # parser_celery_app.send_task(
+        #     "telegram.tasks.send_message_via_bot", args=[chat_id, "Получено в очередь"]
+        # )
         # Парсим страницу
         html = urlopen("https://www.uksivt.ru/zameny").read()
         soup = BeautifulSoup(html, "html.parser")
         link, date = getLastZamenaLink(soup=soup)
 
         # Отправляем второе сообщение
-        parser_celery_app.send_task(
-            "telegram.tasks.send_message_via_bot", args=[chat_id, f"{link}\n{date}"]
-        )
+        # parser_celery_app.send_task(
+        #     "telegram.tasks.send_message_via_bot", args=[chat_id, f"{link}\n{date}"]
+        # )
     except Exception as e:
         # В случае ошибки отправляем сообщение об ошибке
         parser_celery_app.send_task(

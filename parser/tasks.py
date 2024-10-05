@@ -1,3 +1,5 @@
+import datetime
+
 from broker import parser_celery_app
 from parser import methods
 import asyncio
@@ -15,15 +17,20 @@ import functools
 
 
 @parser_celery_app.task
-def get_latest_zamena_link():
+def parse_zamena(url: str, date: datetime.datetime) -> dict:
+    return methods.parse_zamena(url, date)
+
+
+@parser_celery_app.task
+def get_latest_zamena_link() -> dict:
     return methods.get_latest_zamena_link()
 
 
 @parser_celery_app.task
-def get_latest_zamena_link_telegram(chat_id):
+def get_latest_zamena_link_telegram(chat_id) -> None:
     asyncio.run(methods.get_latest_zamena_link_telegram(chat_id))
 
 
 @parser_celery_app.task
-def check_new():
+def check_new() -> dict:
     return asyncio.run(methods.check_new())
