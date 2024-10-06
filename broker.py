@@ -24,7 +24,7 @@ parser_celery_app.conf.beat_schedule = {
     "check-new-every-5-minutes": {
         "task": "parser.tasks.check_new",  # Путь к вашей задаче
         "schedule": crontab(
-            minute="*/5",
+            minute="*/2",
             # hour="6-22"
         ),  # Каждые 5 минут с 6 до 22 часов
         "args": (),  # Аргументы для задачи, если есть

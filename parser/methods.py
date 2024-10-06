@@ -88,12 +88,15 @@ async def get_latest_zamena_link_telegram(chat_id: int) -> None:
 
 
 def check_new():
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"Начал проверять замены"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"Начал проверять замены"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"1"]
     )
 
     # r = redis.Redis(
@@ -103,56 +106,77 @@ def check_new():
     #     password=REDIS_PASSWORD,
     #     username=REDIS_USERNAME,
     # )
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"1"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"1"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"2"]
     )
     # res = await r.lrange("alreadyFound", 0, -1)
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"2"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"2"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"3"]
     )
     # print(type(res))
     # return res
     html = urlopen(SCHEDULE_URL).read()
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"3"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"3"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"4"]
     )
     soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"4"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"4"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"5"]
     )
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"5"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"5"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"6"]
     )
     site_links = getAllTablesLinks(tables)
-    asyncio.run(
-        send_task(
-            parser_celery_app,
-            "telegram.tasks.send_message_via_bot",
-            args=[DEBUG_CHANNEL, f"6"],
-        )
+    # asyncio.run(
+    #     send_task(
+    #         parser_celery_app,
+    #         "telegram.tasks.send_message_via_bot",
+    #         args=[DEBUG_CHANNEL, f"6"],
+    #     )
+    # )
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"7"]
     )
     databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"8"]
+    )
     # await send_task(
     #     parser_celery_app,
     #     "telegram.tasks.send_message_via_bot",
