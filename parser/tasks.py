@@ -33,4 +33,4 @@ def get_latest_zamena_link_telegram(chat_id) -> None:
 
 @parser_celery_app.task
 def check_new() -> dict:
-    return asyncio.run(methods.check_new())
+    return methods.check_new()

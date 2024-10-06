@@ -87,11 +87,13 @@ async def get_latest_zamena_link_telegram(chat_id: int) -> None:
         )
 
 
-async def check_new():
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"Начал проверять замены"],
+def check_new():
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"Начал проверять замены"],
+        )
     )
 
     # r = redis.Redis(
@@ -101,42 +103,54 @@ async def check_new():
     #     password=REDIS_PASSWORD,
     #     username=REDIS_USERNAME,
     # )
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"1"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"1"],
+        )
     )
     # res = await r.lrange("alreadyFound", 0, -1)
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"2"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"2"],
+        )
     )
     # print(type(res))
     # return res
     html = urlopen(SCHEDULE_URL).read()
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"3"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"3"],
+        )
     )
     soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"4"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"4"],
+        )
     )
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"5"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"5"],
+        )
     )
     site_links = getAllTablesLinks(tables)
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"6"],
+    asyncio.run(
+        send_task(
+            parser_celery_app,
+            "telegram.tasks.send_message_via_bot",
+            args=[DEBUG_CHANNEL, f"6"],
+        )
     )
     databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
     await send_task(

@@ -12,7 +12,7 @@ parser_celery_app = Celery(
     broker=BROKER_URL,
     backend=BACKEND_URL,
 )
-
+parser_celery_app.conf.broker_connection_retry_on_startup = True
 parser_celery_app.autodiscover_tasks(["parser"], force=True)
 
 print("***")
