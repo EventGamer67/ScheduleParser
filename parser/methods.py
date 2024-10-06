@@ -94,19 +94,19 @@ async def check_new():
         args=[DEBUG_CHANNEL, f"Начал проверять замены"],
     )
 
-    r = redis.Redis(
-        host=REDIS_HOST_URL,
-        port=REDIS_PORT,
-        decode_responses=True,
-        password=REDIS_PASSWORD,
-        username=REDIS_USERNAME,
-    )
+    # r = redis.Redis(
+    #     host=REDIS_HOST_URL,
+    #     port=REDIS_PORT,
+    #     decode_responses=True,
+    #     password=REDIS_PASSWORD,
+    #     username=REDIS_USERNAME,
+    # )
     await send_task(
         parser_celery_app,
         "telegram.tasks.send_message_via_bot",
         args=[DEBUG_CHANNEL, f"1"],
     )
-    res = await r.lrange("alreadyFound", 0, -1)
+    # res = await r.lrange("alreadyFound", 0, -1)
     await send_task(
         parser_celery_app,
         "telegram.tasks.send_message_via_bot",
