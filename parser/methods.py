@@ -96,7 +96,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"1"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"1"],
+        retries=5,
     )
 
     # r = redis.Redis(
@@ -114,7 +116,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"2"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"2"],
+        retries=5,
     )
     # res = await r.lrange("alreadyFound", 0, -1)
     # asyncio.run(
@@ -125,7 +129,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"3"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"3"],
+        retries=5,
     )
     # print(type(res))
     # return res
@@ -138,7 +144,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"4"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"4"],
+        retries=5,
     )
     soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
     # asyncio.run(
@@ -149,7 +157,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"5"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"5"],
+        retries=5,
     )
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
     # asyncio.run(
@@ -160,7 +170,9 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"6"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"6"],
+        retries=5,
     )
     site_links = getAllTablesLinks(tables)
     # asyncio.run(
@@ -171,11 +183,15 @@ def check_new():
     #     )
     # )
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"7"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"7"],
+        retries=5,
     )
     databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
     parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[DEBUG_CHANNEL, f"8"]
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"8"],
+        retries=5,
     )
     # await send_task(
     #     parser_celery_app,
