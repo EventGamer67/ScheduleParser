@@ -1,9 +1,11 @@
+import asyncio
 import datetime
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from typing import List
 from aiogram.fsm.storage import redis
 from celery import signature
+from celery.result import AsyncResult
 
 from bot_worker import parse_zamenas
 from bot_worker.bot import admins
@@ -23,6 +25,26 @@ from src.code.core.schedule_parser import (
 )
 from src.code.models.parsed_date_model import ParsedDate
 from src.code.models.zamena_table_model import ZamTable
+
+
+async def send_task(celery_app, task_name: str, args: list = list) -> AsyncResult:
+    max_retries = 5
+    retries = 0
+    while retries < max_retries:
+        task = celery_app.send_task(task_name, args=args)
+        task_id = task.id
+        result = AsyncResult(task_id)
+
+        while not result.ready():
+            await asyncio.sleep(1)
+
+        if result.successful():
+            return result
+        elif result.failed():
+            retries += 1
+            if retries == max_retries:
+                raise Exception("Достигнут лимит попыток. Попробуйте позже.")
+        raise Exception("Хз что произошло")
 
 
 def parse_zamena(url: str, date: datetime.datetime):
@@ -66,7 +88,11 @@ async def get_latest_zamena_link_telegram(chat_id: int) -> None:
 
 
 async def check_new():
-    chat_id = DEBUG_CHANNEL
+    await send_task(
+        parser_celery_app,
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"Начал проверять замены"],
+    )
 
     r = redis.Redis(
         host=REDIS_HOST_URL,
@@ -78,17 +104,16 @@ async def check_new():
     res = await r.lrange("alreadyFound", 0, -1)
     # print(type(res))
     # return res
-    parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
-    )
     html = urlopen(SCHEDULE_URL).read()
     soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
     tables: List[ZamTable] = getAllMonthTables(soup=soup)
     site_links = getAllTablesLinks(tables)
     databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
     # await on_check(bot=bot)
-    parser_celery_app.send_task(
-        "telegram.tasks.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
+    await send_task(
+        parser_celery_app,
+        "telegram.tasks.send_message_via_bot",
+        args=[DEBUG_CHANNEL, f"ℹ️ Проверил замены"],
     )
     # if not site_links.__eq__(databaseLinks):
     #     alreadyFound = await r.lrange("alreadyFound", 0, -1)
