@@ -10,10 +10,19 @@ from bot_worker.bot import admins
 from broker import sup, parser_celery_app
 from parser_secrets import (
     DEBUG_CHANNEL,
+    REDIS_HOST_URL,
+    REDIS_PORT,
+    REDIS_PASSWORD,
+    REDIS_USERNAME,
+    SCHEDULE_URL,
 )
 from src.code.core.schedule_parser import (
     getLastZamenaLink,
+    getAllMonthTables,
+    getAllTablesLinks,
 )
+from src.code.models.parsed_date_model import ParsedDate
+from src.code.models.zamena_table_model import ZamTable
 
 
 def parse_zamena(url: str, date: datetime.datetime):
@@ -58,21 +67,29 @@ async def get_latest_zamena_link_telegram(chat_id: int) -> None:
 
 async def check_new():
     chat_id = DEBUG_CHANNEL
+
+    r = redis.Redis(
+        host=REDIS_HOST_URL,
+        port=REDIS_PORT,
+        decode_responses=True,
+        password=REDIS_PASSWORD,
+        username=REDIS_USERNAME,
+    )
+    res = await r.lrange("alreadyFound", 0, -1)
+    # print(type(res))
+    # return res
     parser_celery_app.send_task(
         "telegram.tasks.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
     )
-    # r = redis.Redis(host=REDIS_HOST_URL, port=REDIS_PORT, decode_responses=True, password=REDIS_PASSWORD,
-    #                 username=REDIS_USERNAME)
-    # res = await r.lrange("alreadyFound", 0, -1)
-    # print(type(res))
-    # return res
-
-    # html = urlopen(SCHEDULE_URL).read()
-    # soup: BeautifulSoup = BeautifulSoup(html, 'html.parser')
-    # tables: List[ZamTable] = getAllMonthTables(soup=soup)
-    # site_links = getAllTablesLinks(tables)
-    # databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
-    # # await on_check(bot=bot)
+    html = urlopen(SCHEDULE_URL).read()
+    soup: BeautifulSoup = BeautifulSoup(html, "html.parser")
+    tables: List[ZamTable] = getAllMonthTables(soup=soup)
+    site_links = getAllTablesLinks(tables)
+    databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
+    # await on_check(bot=bot)
+    parser_celery_app.send_task(
+        "telegram.tasks.send_message_via_bot", args=[chat_id, f"ℹ️ Проверил замены"]
+    )
     # if not site_links.__eq__(databaseLinks):
     #     alreadyFound = await r.lrange("alreadyFound", 0, -1)
     #     new = list(set(site_links) - set([x.link for x in databaseLinks]) - set(alreadyFound))
