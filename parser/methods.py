@@ -153,17 +153,17 @@ def check_new():
         )
     )
     databaseLinks: List[ParsedDate] = sup.get_zamena_file_links()
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"7"],
-    )
+    # await send_task(
+    #     parser_celery_app,
+    #     "telegram.tasks.send_message_via_bot",
+    #     args=[DEBUG_CHANNEL, f"7"],
+    # )
     # await on_check(bot=bot)
-    await send_task(
-        parser_celery_app,
-        "telegram.tasks.send_message_via_bot",
-        args=[DEBUG_CHANNEL, f"ℹ️ Проверил замены"],
-    )
+    # await send_task(
+    #     parser_celery_app,
+    #     "telegram.tasks.send_message_via_bot",
+    #     args=[DEBUG_CHANNEL, f"ℹ️ Проверил замены"],
+    # )
     # if not site_links.__eq__(databaseLinks):
     #     alreadyFound = await r.lrange("alreadyFound", 0, -1)
     #     new = list(set(site_links) - set([x.link for x in databaseLinks]) - set(alreadyFound))
